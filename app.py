@@ -98,12 +98,12 @@ st.markdown(
 
     /* Slightly larger nVentures logo */
     [data-testid="stLogo"] {
-        width: 155px !important;
+        width: 205px !important;
     }
 
     [data-testid="stLogo"] img {
-        width: 155px !important;
-        max-width: 155px !important;
+        width: 205px !important;
+        max-width: 205px !important;
         height: auto !important;
     }
 
