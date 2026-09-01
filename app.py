@@ -1,4 +1,3 @@
-from textwrap import dedent
 from dotenv import load_dotenv
 import os
 import json
@@ -660,19 +659,14 @@ page = st.sidebar.radio(
 # SIDEBAR CREDIT
 # ============================================================================
 
-st.sidebar.html("""
-<div class="nv-credit">
-    <div class="nv-credit-small">
-        Built by
-    </div>
-    <div class="nv-credit-name">
-        Pavara Kekulawala
-    </div>
-    <div class="nv-credit-product">
-        nVentures Sourcing Platform
-    </div>
-</div>
-""")
+st.markdown(
+    """<div class="nv-credit">
+        <div class="nv-credit-small">Built by</div>
+        <div class="nv-credit-name">Pavara Kekulawala</div>
+        <div class="nv-credit-product">nVentures Sourcing Platform</div>
+    </div>""",
+    unsafe_allow_html=True,
+)
 
 
 # ============================================================================
@@ -681,43 +675,28 @@ st.sidebar.html("""
 
 if page == "Dashboard":
 
-   st.html("""
-<div class="nv-hero">
-    <div class="nv-hero-title">
-        Sourcing Intelligence
-    </div>
-
-    <div class="nv-hero-subtitle">
-        AI-powered company discovery, research and investment sourcing.
-    </div>
-</div>
-""")
+    st.markdown(
+        """<div class="nv-hero">
+    <div class="nv-hero-title">Sourcing Intelligence</div>
+    <div class="nv-hero-subtitle">AI-powered company discovery, research and investment sourcing.</div>
+</div>""",
+        unsafe_allow_html=True,
+    )
 
 
     # ------------------------------------------------------------------------
     # GEOGRAPHIC FOCUS
     # ------------------------------------------------------------------------
 
-    st.html("""
-<div class="nv-focus">
-    <div class="nv-focus-title">
-        🌐 Geographic Focus — Hard Filter
-    </div>
-
-    <div class="nv-focus-main">
-        South Asia + Singapore
-    </div>
-
-    <div class="nv-focus-text">
-        Afghanistan, Bangladesh, Bhutan, India, Maldives,
-        Nepal, Pakistan, Singapore and Sri Lanka.
-    </div>
-
-    <div class="nv-focus-text">
-        Companies must be headquartered in an eligible country.
-    </div>
-</div>
-""")
+    st.markdown(
+        """<div class="nv-focus">
+    <div class="nv-focus-title">🌐 Geographic Focus — Hard Filter</div>
+    <div class="nv-focus-main">South Asia + Singapore</div>
+    <div class="nv-focus-text">Afghanistan, Bangladesh, Bhutan, India, Maldives, Nepal, Pakistan, Singapore and Sri Lanka.</div>
+    <div class="nv-focus-text">Companies must be headquartered in an eligible country.</div>
+</div>""",
+        unsafe_allow_html=True,
+    )
 
 
     # ------------------------------------------------------------------------
