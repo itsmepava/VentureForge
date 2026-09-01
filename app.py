@@ -590,14 +590,20 @@ user = st.session_state.user
 # SIDEBAR BRANDING
 # ============================================================================
 
-# Use the sidebar image directly so the full nVentures logo is visible.
-# Do not use st.logo() here: Streamlit renders that API as a small navigation
-# logo rather than the larger branded sidebar treatment we want.
+# Streamlit's dedicated logo API.
+# This places the logo in the app's navigation/sidebar area.
 if LOGO_PATH.is_file():
-    st.sidebar.image(
-        str(LOGO_PATH),
-        use_container_width=True,
-    )
+    try:
+        st.logo(
+            str(LOGO_PATH),
+            size="large",
+        )
+    except Exception:
+        # Compatibility fallback for older Streamlit versions.
+        st.sidebar.image(
+            str(LOGO_PATH),
+            use_container_width=True,
+        )
 else:
     st.sidebar.markdown(
         "# nVentures"
@@ -654,7 +660,7 @@ page = st.sidebar.radio(
 # ============================================================================
 
 st.sidebar.markdown(
-    """
+    dedent("""
     <div class="nv-credit">
         <div class="nv-credit-small">
             Built by
@@ -668,7 +674,7 @@ st.sidebar.markdown(
             nVentures Sourcing Platform
         </div>
     </div>
-    """,
+    """),
     unsafe_allow_html=True,
 )
 
@@ -680,7 +686,7 @@ st.sidebar.markdown(
 if page == "Dashboard":
 
     st.markdown(
-        """
+        dedent("""
         <div class="nv-hero">
 
             <div class="nv-hero-title">
@@ -692,7 +698,7 @@ if page == "Dashboard":
             </div>
 
         </div>
-        """,
+        """),
         unsafe_allow_html=True,
     )
 
@@ -702,7 +708,7 @@ if page == "Dashboard":
     # ------------------------------------------------------------------------
 
     st.markdown(
-        """
+        dedent("""
         <div class="nv-focus">
 
             <div class="nv-focus-title">
@@ -723,7 +729,7 @@ if page == "Dashboard":
             </div>
 
         </div>
-        """,
+        """),
         unsafe_allow_html=True,
     )
 
