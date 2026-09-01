@@ -1,21 +1,21 @@
+from dotenv import load_dotenv
 import os
 import json
 from datetime import datetime, timezone
 from pathlib import Path
 from textwrap import dedent
 
-import pandas as pd
 import streamlit as st
-from dotenv import load_dotenv
 
 import database
+from auth import require_login
 from config import settings, ELIGIBLE_COUNTRIES
 from google_sheets import get_worksheets
 from sourcing_engine import run_sourcing
 
 
 # ============================================================================
-# PATHS
+# APP PATHS
 # ============================================================================
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -46,552 +46,385 @@ st.set_page_config(
 
 
 # ============================================================================
-# CUSTOM CSS
+# DARK UI / BRAND STYLING
 # ============================================================================
 
 st.markdown(
-    """
-<style>
-
-/* =========================================================================
-   GLOBAL
-   ========================================================================= */
-
-.stApp {
-    background: #070707;
-    color: #F5F7FA;
-}
-
-[data-testid="stAppViewContainer"] {
-    background: #070707;
-}
-
-[data-testid="stHeader"] {
-    background: transparent;
-}
-
-#MainMenu {
-    visibility: hidden;
-}
-
-footer {
-    visibility: hidden;
-}
-
-
-/* =========================================================================
-   MAIN CONTENT WIDTH
-   ========================================================================= */
-
-.block-container {
-    padding-top: 2.5rem;
-    padding-bottom: 4rem;
-    max-width: 1500px;
-}
-
-
-/* =========================================================================
-   SIDEBAR
-   ========================================================================= */
-
-section[data-testid="stSidebar"] {
-    background: #050505;
-    border-right: 1px solid #202020;
-}
-
-section[data-testid="stSidebar"] > div {
-    background: #050505;
-}
-
-section[data-testid="stSidebar"] * {
-    color: #F5F7FA;
-}
-
-
-/* =========================================================================
-   SIDEBAR LOGO
-   ========================================================================= */
-
-.nv-sidebar-logo {
-    width: 205px;
-    max-width: 100%;
-    height: auto;
-    display: block;
-    margin: 8px auto 26px auto;
-}
-
-
-/* =========================================================================
-   SIDEBAR USER CARD
-   ========================================================================= */
-
-.nv-user-card {
-    background: #0C0C0C;
-    border: 1px solid #242424;
-    border-radius: 12px;
-    padding: 14px;
-    margin: 10px 0 18px 0;
-}
-
-.nv-user-label {
-    color: #777D86 !important;
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    margin-bottom: 5px;
-}
-
-.nv-user-email {
-    color: #FFFFFF !important;
-    font-size: 13px;
-    font-weight: 600;
-    word-break: break-word;
-}
-
-.nv-user-role {
-    color: #65A9FF !important;
-    font-size: 12px;
-    margin-top: 5px;
-}
-
-
-/* =========================================================================
-   SIDEBAR NAVIGATION
-   ========================================================================= */
-
-section[data-testid="stSidebar"] [data-testid="stRadio"] label {
-    color: #D9DDE4 !important;
-}
-
-section[data-testid="stSidebar"] [data-testid="stRadio"] label:hover {
-    color: #FFFFFF !important;
-}
-
-
-/* =========================================================================
-   SIDEBAR CREDIT
-   ========================================================================= */
-
-.nv-credit {
-    margin-top: 26px;
-    padding: 14px;
-    border: 1px solid #252525;
-    border-radius: 12px;
-    background: #090909;
-    text-align: center;
-}
-
-.nv-credit-small {
-    color: #727780 !important;
-    font-size: 10px;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    margin-bottom: 5px;
-}
-
-.nv-credit-name {
-    color: #FFFFFF !important;
-    font-size: 13px;
-    font-weight: 700;
-}
-
-.nv-credit-product {
-    color: #686D76 !important;
-    font-size: 10px;
-    margin-top: 4px;
-}
-
-
-/* =========================================================================
-   TYPOGRAPHY
-   ========================================================================= */
-
-h1,
-h2,
-h3,
-h4 {
-    color: #FFFFFF !important;
-    letter-spacing: -0.025em;
-}
-
-h1 {
-    font-weight: 800;
-}
-
-h2,
-h3 {
-    font-weight: 750;
-}
-
-p,
-span,
-label {
-    color: inherit;
-}
-
-
-/* =========================================================================
-   HERO
-   ========================================================================= */
-
-.nv-hero {
-    position: relative;
-    overflow: hidden;
-    background:
-        radial-gradient(
-            circle at 90% 10%,
-            rgba(11, 116, 255, 0.16),
-            transparent 32%
-        ),
-        #0A0A0A;
-    border: 1px solid #242424;
-    border-radius: 18px;
-    padding: 34px 36px;
-    margin-bottom: 22px;
-}
-
-.nv-hero:before {
-    content: "";
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    width: 4px;
-    background: #0B74FF;
-}
-
-.nv-hero-eyebrow {
-    color: #65A9FF !important;
-    font-size: 11px;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 0.12em;
-    margin-bottom: 8px;
-}
-
-.nv-hero-title {
-    color: #FFFFFF !important;
-    font-size: 42px;
-    line-height: 1.05;
-    font-weight: 800;
-    margin: 0;
-}
-
-.nv-hero-subtitle {
-    color: #9DA4AE !important;
-    font-size: 15px;
-    margin-top: 10px;
-    max-width: 760px;
-}
-
-
-/* =========================================================================
-   FOCUS CARD
-   ========================================================================= */
-
-.nv-focus {
-    background:
-        linear-gradient(
-            135deg,
-            #0D1824,
-            #0B1118
-        );
-    border: 1px solid #164B83;
-    border-radius: 14px;
-    padding: 20px 22px;
-    margin-bottom: 26px;
-}
-
-.nv-focus-title {
-    color: #65A9FF !important;
-    font-size: 12px;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-}
-
-.nv-focus-main {
-    color: #FFFFFF !important;
-    font-size: 21px;
-    font-weight: 750;
-    margin-top: 7px;
-}
-
-.nv-focus-text {
-    color: #AEB7C3 !important;
-    font-size: 12px;
-    line-height: 1.6;
-    margin-top: 7px;
-}
-
-
-/* =========================================================================
-   SECTION LABEL
-   ========================================================================= */
-
-.nv-section-label {
-    color: #7F8792 !important;
-    font-size: 11px;
-    text-transform: uppercase;
-    font-weight: 800;
-    letter-spacing: 0.1em;
-    margin-bottom: 8px;
-}
-
-
-/* =========================================================================
-   CONTROL CARDS
-   ========================================================================= */
-
-.nv-control-card {
-    background: #0C0C0C;
-    border: 1px solid #242424;
-    border-radius: 14px;
-    padding: 18px;
-}
-
-
-/* =========================================================================
-   METRICS
-   ========================================================================= */
-
-div[data-testid="stMetric"] {
-    background: #0C0C0C;
-    border: 1px solid #242424;
-    border-radius: 14px;
-    padding: 18px;
-}
-
-div[data-testid="stMetric"] label {
-    color: #858C96 !important;
-}
-
-div[data-testid="stMetric"] [data-testid="stMetricValue"] {
-    color: #FFFFFF !important;
-    font-weight: 800;
-}
-
-
-/* =========================================================================
-   INPUTS
-   ========================================================================= */
-
-div[data-baseweb="input"] {
-    background: #111111;
-    border-radius: 9px;
-}
-
-div[data-baseweb="input"] input {
-    color: #FFFFFF !important;
-}
-
-div[data-baseweb="textarea"] {
-    background: #111111;
-}
-
-div[data-baseweb="textarea"] textarea {
-    color: #FFFFFF !important;
-}
-
-div[data-baseweb="select"] > div {
-    background: #111111;
-    border-color: #303030;
-    color: #FFFFFF;
-}
-
-div[data-testid="stNumberInput"] > div {
-    background: #111111;
-    border-radius: 9px;
-}
-
-div[data-testid="stNumberInput"] input {
-    color: #FFFFFF !important;
-}
-
-
-/* =========================================================================
-   BUTTONS
-   ========================================================================= */
-
-.stButton > button {
-    background: #111111;
-    color: #FFFFFF;
-    border: 1px solid #343434;
-    border-radius: 9px;
-    min-height: 42px;
-    font-weight: 650;
-}
-
-.stButton > button:hover {
-    border-color: #0B74FF;
-    color: #FFFFFF;
-}
-
-.stButton > button[kind="primary"] {
-    background: #0B74FF;
-    border: 1px solid #0B74FF;
-    color: #FFFFFF;
-    border-radius: 9px;
-    min-height: 48px;
-    font-weight: 750;
-}
-
-.stButton > button[kind="primary"]:hover {
-    background: #0866DD;
-    border-color: #0866DD;
-}
-
-
-/* =========================================================================
-   ALERTS
-   ========================================================================= */
-
-div[data-testid="stAlert"] {
-    border-radius: 10px;
-}
-
-div[data-testid="stAlert"] p {
-    color: #F5F7FA !important;
-}
-
-
-/* =========================================================================
-   EXPANDERS
-   ========================================================================= */
-
-div[data-testid="stExpander"] {
-    background: #0C0C0C;
-    border: 1px solid #242424;
-    border-radius: 12px;
-}
-
-div[data-testid="stExpander"] summary {
-    color: #FFFFFF !important;
-}
-
-
-/* =========================================================================
-   DATAFRAME
-   ========================================================================= */
-
-div[data-testid="stDataFrame"] {
-    background: #0B0B0B;
-    border: 1px solid #242424;
-    border-radius: 12px;
-}
-
-
-/* =========================================================================
-   DIVIDERS
-   ========================================================================= */
-
-hr {
-    border-color: #242424 !important;
-}
-
-
-/* =========================================================================
-   STATUS CARDS
-   ========================================================================= */
-
-.nv-status {
-    background: #0C0C0C;
-    border: 1px solid #242424;
-    border-radius: 12px;
-    padding: 15px;
-}
-
-.nv-status-title {
-    color: #858C96 !important;
-    font-size: 10px;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-}
-
-.nv-status-value {
-    color: #FFFFFF !important;
-    font-size: 14px;
-    font-weight: 700;
-    margin-top: 5px;
-}
-
-
-/* =========================================================================
-   RUN RESULT HEADER
-   ========================================================================= */
-
-.nv-result {
-    background:
-        radial-gradient(
-            circle at 95% 0%,
-            rgba(11, 116, 255, 0.10),
-            transparent 30%
-        ),
-        #0A0A0A;
-    border: 1px solid #242424;
-    border-radius: 14px;
-    padding: 20px;
-    margin: 18px 0;
-}
-
-.nv-result-title {
-    color: #FFFFFF !important;
-    font-size: 20px;
-    font-weight: 800;
-}
-
-.nv-result-subtitle {
-    color: #7F8792 !important;
-    font-size: 12px;
-    margin-top: 4px;
-}
-
-
-/* =========================================================================
-   LOGIN
-   ========================================================================= */
-
-.nv-login {
-    max-width: 520px;
-    margin: 80px auto 0 auto;
-    padding: 32px;
-    background: #0A0A0A;
-    border: 1px solid #242424;
-    border-radius: 18px;
-}
-
-.nv-login-logo {
-    width: 230px;
-    max-width: 80%;
-    display: block;
-    margin: 0 auto 30px auto;
-}
-
-.nv-login-title {
-    color: #FFFFFF !important;
-    text-align: center;
-    font-size: 31px;
-    font-weight: 800;
-}
-
-.nv-login-subtitle {
-    color: #8F969F !important;
-    text-align: center;
-    font-size: 13px;
-    margin: 8px 0 25px 0;
-}
-
-
-/* =========================================================================
-   LINKS
-   ========================================================================= */
-
-a {
-    color: #65A9FF !important;
-}
-
-</style>
-""",
+    dedent("""
+    <style>
+
+    /* ================================================================
+       GLOBAL
+       ================================================================ */
+
+    .stApp {
+        background: #080808;
+        color: #F5F7FA;
+    }
+
+    [data-testid="stAppViewContainer"] {
+        background: #080808;
+    }
+
+    [data-testid="stHeader"] {
+        background: transparent;
+    }
+
+    #MainMenu {
+        visibility: hidden;
+    }
+
+    footer {
+        visibility: hidden;
+    }
+
+
+    /* ================================================================
+       SIDEBAR
+       ================================================================ */
+
+    section[data-testid="stSidebar"] {
+        background: #050505;
+        border-right: 1px solid #242424;
+    }
+
+    section[data-testid="stSidebar"] > div {
+        background: #050505;
+    }
+
+    section[data-testid="stSidebar"] * {
+        color: #F5F7FA;
+    }
+
+
+    /* ================================================================
+       GENERAL TEXT
+       ================================================================ */
+
+    p,
+    span,
+    label {
+        color: inherit;
+    }
+
+    .stMarkdown {
+        color: #F5F7FA;
+    }
+
+    .stCaption {
+        color: #A7ADB7 !important;
+    }
+
+
+    /* ================================================================
+       HEADINGS
+       ================================================================ */
+
+    h1,
+    h2,
+    h3,
+    h4 {
+        color: #F5F7FA !important;
+        letter-spacing: -0.02em;
+    }
+
+    h1 {
+        font-weight: 750;
+    }
+
+    h2,
+    h3 {
+        font-weight: 700;
+    }
+
+
+    /* ================================================================
+       HERO
+       ================================================================ */
+
+    .nv-hero {
+        background: #050505;
+        border: 1px solid #252525;
+        border-radius: 16px;
+        padding: 30px 32px;
+        margin-bottom: 24px;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
+    }
+
+    .nv-hero-title {
+        color: #FFFFFF !important;
+        font-size: 38px;
+        font-weight: 750;
+        margin: 0;
+    }
+
+    .nv-hero-subtitle {
+        color: #A7ADB7 !important;
+        font-size: 16px;
+        margin-top: 8px;
+    }
+
+
+    /* ================================================================
+       GEOGRAPHIC FOCUS
+       ================================================================ */
+
+    .nv-focus {
+        background: #101923;
+        border: 1px solid #164B83;
+        border-radius: 12px;
+        padding: 18px;
+        margin: 10px 0 24px 0;
+    }
+
+    .nv-focus-title {
+        font-size: 14px;
+        font-weight: 700;
+        color: #65A9FF !important;
+    }
+
+    .nv-focus-main {
+        font-size: 18px;
+        font-weight: 700;
+        color: #FFFFFF !important;
+        margin-top: 6px;
+    }
+
+    .nv-focus-text {
+        font-size: 13px;
+        color: #B8C0CC !important;
+        margin-top: 7px;
+    }
+
+
+    /* ================================================================
+       METRICS
+       ================================================================ */
+
+    div[data-testid="stMetric"] {
+        background: #111111;
+        border: 1px solid #292929;
+        border-radius: 12px;
+        padding: 18px;
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.18);
+    }
+
+    div[data-testid="stMetric"] label {
+        color: #9CA3AF !important;
+    }
+
+    div[data-testid="stMetric"] [data-testid="stMetricValue"] {
+        color: #FFFFFF !important;
+    }
+
+
+    /* ================================================================
+       INPUTS
+       ================================================================ */
+
+    div[data-baseweb="input"] {
+        background: #151515;
+        border-radius: 8px;
+    }
+
+    div[data-baseweb="input"] input {
+        color: #FFFFFF !important;
+    }
+
+    div[data-baseweb="textarea"] {
+        background: #151515;
+    }
+
+    div[data-baseweb="textarea"] textarea {
+        color: #FFFFFF !important;
+    }
+
+
+    /* ================================================================
+       SELECTBOX
+       ================================================================ */
+
+    div[data-baseweb="select"] > div {
+        background: #151515;
+        border-color: #333333;
+        color: #FFFFFF;
+    }
+
+
+    /* ================================================================
+       NUMBER INPUT
+       ================================================================ */
+
+    div[data-testid="stNumberInput"] > div {
+        background: #151515;
+        border-radius: 8px;
+    }
+
+    div[data-testid="stNumberInput"] input {
+        color: #FFFFFF !important;
+    }
+
+
+    /* ================================================================
+       BUTTONS
+       ================================================================ */
+
+    .stButton > button {
+        background: #151515;
+        color: #FFFFFF;
+        border: 1px solid #383838;
+        border-radius: 8px;
+        font-weight: 600;
+        min-height: 42px;
+    }
+
+    .stButton > button:hover {
+        border-color: #0B74FF;
+        color: #FFFFFF;
+    }
+
+    .stButton > button[kind="primary"] {
+        background: #0B74FF;
+        border: 1px solid #0B74FF;
+        color: #FFFFFF;
+        font-weight: 700;
+        border-radius: 8px;
+        min-height: 48px;
+    }
+
+    .stButton > button[kind="primary"]:hover {
+        background: #0866DD;
+        border-color: #0866DD;
+    }
+
+
+    /* ================================================================
+       ALERTS
+       ================================================================ */
+
+    div[data-testid="stAlert"] {
+        background: #151515;
+        border: 1px solid #303030;
+        color: #F5F7FA;
+    }
+
+    div[data-testid="stAlert"] p {
+        color: #F5F7FA !important;
+    }
+
+
+    /* ================================================================
+       EXPANDERS
+       ================================================================ */
+
+    div[data-testid="stExpander"] {
+        background: #111111;
+        border: 1px solid #292929;
+        border-radius: 10px;
+    }
+
+    div[data-testid="stExpander"] summary {
+        color: #FFFFFF !important;
+    }
+
+
+    /* ================================================================
+       DATAFRAMES
+       ================================================================ */
+
+    div[data-testid="stDataFrame"] {
+        background: #111111;
+        border: 1px solid #292929;
+        border-radius: 10px;
+    }
+
+
+    /* ================================================================
+       DIVIDERS
+       ================================================================ */
+
+    hr {
+        border-color: #292929 !important;
+    }
+
+
+    /* ================================================================
+       SIDEBAR CREDIT
+       ================================================================ */
+
+    .nv-credit {
+        margin-top: 26px;
+        padding: 14px;
+        border: 1px solid #303030;
+        border-radius: 10px;
+        background: #0B0B0B;
+        text-align: center;
+    }
+
+    .nv-credit-small {
+        font-size: 12px;
+        color: #999999 !important;
+        margin-bottom: 5px;
+    }
+
+    .nv-credit-name {
+        font-size: 14px;
+        font-weight: 700;
+        color: #FFFFFF !important;
+    }
+
+    .nv-credit-product {
+        font-size: 11px;
+        color: #777777 !important;
+        margin-top: 5px;
+    }
+
+
+    /* ================================================================
+       LOGIN
+       ================================================================ */
+
+    .nv-login-wrap {
+        max-width: 620px;
+        margin: 55px auto 0 auto;
+        padding: 10px;
+    }
+
+    .nv-login-title {
+        text-align: center;
+        font-size: 32px;
+        font-weight: 750;
+        color: #FFFFFF !important;
+        margin-top: 20px;
+    }
+
+    .nv-login-subtitle {
+        text-align: center;
+        color: #A7ADB7 !important;
+        margin-bottom: 25px;
+    }
+
+
+    /* ================================================================
+       RADIO / CHECKBOX
+       ================================================================ */
+
+    [data-testid="stCheckbox"] label,
+    [data-testid="stRadio"] label {
+        color: #F5F7FA !important;
+    }
+
+
+    /* ================================================================
+       LINKS
+       ================================================================ */
+
+    a {
+        color: #65A9FF !important;
+    }
+
+    </style>
+    """),
     unsafe_allow_html=True,
 )
 
@@ -655,12 +488,6 @@ if force_reset and admin_email and admin_password:
 if "user" not in st.session_state:
     st.session_state.user = None
 
-if "last_report" not in st.session_state:
-    st.session_state.last_report = None
-
-if "last_run_id" not in st.session_state:
-    st.session_state.last_run_id = None
-
 
 # ============================================================================
 # LOGIN
@@ -669,21 +496,18 @@ if "last_run_id" not in st.session_state:
 if not st.session_state.user:
 
     st.markdown(
-        '<div class="nv-login">',
+        '<div class="nv-login-wrap">',
         unsafe_allow_html=True,
     )
 
     if LOGO_PATH.is_file():
-
-        st.markdown(
-            f'<img class="nv-login-logo" src="{LOGO_PATH.as_posix()}">',
-            unsafe_allow_html=True,
+        st.image(
+            str(LOGO_PATH),
+            use_container_width=True,
         )
-
     else:
-
         st.markdown(
-            '<div class="nv-login-title">nVentures</div>',
+            '<div style="text-align:center;"><h1>nVentures</h1></div>',
             unsafe_allow_html=True,
         )
 
@@ -694,7 +518,7 @@ if not st.session_state.user:
 
     st.markdown(
         '<div class="nv-login-subtitle">'
-        'Private AI-powered sourcing platform'
+        'Private sourcing platform for the nVentures team.'
         '</div>',
         unsafe_allow_html=True,
     )
@@ -727,25 +551,24 @@ if not st.session_state.user:
         )
 
         if user:
-
             st.session_state.user = user
             st.rerun()
-
         else:
-
             st.error(
                 "Invalid email or password."
             )
 
     st.markdown(
-        '<div style="'
-        'text-align:center;'
-        'color:#60656d;'
-        'font-size:11px;'
-        'margin-top:22px;'
-        '">'
-        'nVentures Sourcing Platform'
-        '</div>',
+        dedent("""
+        <div style="
+            text-align:center;
+            color:#888;
+            font-size:12px;
+            margin-top:25px;
+        ">
+            nVentures Sourcing Platform
+        </div>
+        """),
         unsafe_allow_html=True,
     )
 
@@ -768,33 +591,38 @@ user = st.session_state.user
 # SIDEBAR BRANDING
 # ============================================================================
 
+# Streamlit's dedicated logo API.
+# This places the logo in the app's navigation/sidebar area.
 if LOGO_PATH.is_file():
-
-    st.sidebar.markdown(
-        f'<img class="nv-sidebar-logo" src="{LOGO_PATH.as_posix()}">',
-        unsafe_allow_html=True,
-    )
-
+    try:
+        st.logo(
+            str(LOGO_PATH),
+            size="large",
+        )
+    except Exception:
+        # Compatibility fallback for older Streamlit versions.
+        st.sidebar.image(
+            str(LOGO_PATH),
+            use_container_width=True,
+        )
 else:
-
     st.sidebar.markdown(
-        "## nVentures"
+        "# nVentures"
     )
 
 
 # ============================================================================
-# SIDEBAR USER
+# SIDEBAR USER INFORMATION
 # ============================================================================
 
-st.sidebar.markdown(
-    f"""
-    <div class="nv-user-card">
-        <div class="nv-user-label">Signed in as</div>
-        <div class="nv-user-email">{user["email"]}</div>
-        <div class="nv-user-role">Role: {user["role"]}</div>
-    </div>
-    """,
-    unsafe_allow_html=True,
+st.sidebar.divider()
+
+st.sidebar.caption(
+    f"Signed in as {user['email']}"
+)
+
+st.sidebar.caption(
+    f"Role: {user['role']}"
 )
 
 
@@ -808,8 +636,6 @@ if st.sidebar.button(
 ):
 
     st.session_state.user = None
-    st.session_state.last_report = None
-    st.session_state.last_run_id = None
 
     st.rerun()
 
@@ -831,25 +657,15 @@ page = st.sidebar.radio(
 
 
 # ============================================================================
-# SINGLE CREDIT LOCATION
+# SIDEBAR CREDIT
 # ============================================================================
 
-st.sidebar.markdown(
-    """
-    <div class="nv-credit">
-        <div class="nv-credit-small">
-            Built by
-        </div>
-
-        <div class="nv-credit-name">
-            Pavara Kekulawala
-        </div>
-
-        <div class="nv-credit-product">
-            nVentures Sourcing Platform
-        </div>
-    </div>
-    """,
+st.markdown(
+    dedent("""<div class="nv-credit">
+        <div class="nv-credit-small">Built by</div>
+        <div class="nv-credit-name">Pavara Kekulawala</div>
+        <div class="nv-credit-product">nVentures Sourcing Platform</div>
+    </div>"""),
     unsafe_allow_html=True,
 )
 
@@ -860,30 +676,11 @@ st.sidebar.markdown(
 
 if page == "Dashboard":
 
-    # ------------------------------------------------------------------------
-    # HERO
-    # ------------------------------------------------------------------------
-
     st.markdown(
-        """
-        <div class="nv-hero">
-
-            <div class="nv-hero-eyebrow">
-                nVentures • Fund II
-            </div>
-
-            <div class="nv-hero-title">
-                Sourcing Intelligence
-            </div>
-
-            <div class="nv-hero-subtitle">
-                AI-powered company discovery, research and investment sourcing.
-                Discover qualified companies from the nVentures partner network
-                and push verified opportunities directly into Active Sourcing.
-            </div>
-
-        </div>
-        """,
+        dedent("""<div class="nv-hero">
+    <div class="nv-hero-title">Sourcing Intelligence</div>
+    <div class="nv-hero-subtitle">AI-powered company discovery, research and investment sourcing.</div>
+</div>"""),
         unsafe_allow_html=True,
     )
 
@@ -893,40 +690,107 @@ if page == "Dashboard":
     # ------------------------------------------------------------------------
 
     st.markdown(
-        f"""
-        <div class="nv-focus">
-
-            <div class="nv-focus-title">
-                🌐 Geographic Focus • Hard Filter
-            </div>
-
-            <div class="nv-focus-main">
-                South Asia + Singapore
-            </div>
-
-            <div class="nv-focus-text">
-                {", ".join(ELIGIBLE_COUNTRIES)}
-            </div>
-
-            <div class="nv-focus-text">
-                Companies must be headquartered in an eligible country.
-                Geography is enforced in Python and cannot be overridden by
-                the AI model.
-            </div>
-
-        </div>
-        """,
+        dedent("""<div class="nv-focus">
+    <div class="nv-focus-title">🌐 Geographic Focus — Hard Filter</div>
+    <div class="nv-focus-main">South Asia + Singapore</div>
+    <div class="nv-focus-text">Afghanistan, Bangladesh, Bhutan, India, Maldives, Nepal, Pakistan, Singapore and Sri Lanka.</div>
+    <div class="nv-focus-text">Companies must be headquartered in an eligible country.</div>
+</div>"""),
         unsafe_allow_html=True,
     )
 
 
     # ------------------------------------------------------------------------
-    # QUICK STATUS
+    # SOURCING CONTROLS
     # ------------------------------------------------------------------------
 
     st.markdown(
-        '<div class="nv-section-label">System overview</div>',
-        unsafe_allow_html=True,
+        "### Sourcing controls"
+    )
+
+    c1, c2, c3 = st.columns(3)
+
+
+    with c1:
+
+        target = st.number_input(
+            "Target new companies",
+            min_value=1,
+            max_value=100,
+            value=25,
+            step=1,
+        )
+
+
+    with c2:
+
+        max_partners = st.number_input(
+            "Partners per run",
+            min_value=1,
+            max_value=50,
+            value=int(settings.max_partners),
+            step=1,
+        )
+
+
+    with c3:
+
+        max_research = st.number_input(
+            "Deep research limit",
+            min_value=1,
+            max_value=200,
+            value=int(settings.max_deep_research),
+            step=1,
+        )
+
+
+    st.divider()
+
+
+    # ------------------------------------------------------------------------
+    # GEOGRAPHIC ELIGIBILITY
+    # ------------------------------------------------------------------------
+
+    st.markdown(
+        "### Geographic eligibility"
+    )
+
+    st.info(
+        "Companies must be headquartered in: "
+        + ", ".join(ELIGIBLE_COUNTRIES)
+    )
+
+    st.warning(
+        "This is a hard Python-level filter. "
+        "An AI response cannot override the geography rule."
+    )
+
+
+    # ------------------------------------------------------------------------
+    # INVESTMENT CRITERIA
+    # ------------------------------------------------------------------------
+
+    st.markdown(
+        "### Investment criteria"
+    )
+
+    st.write(
+        f"**B2B:** required  •  "
+        f"**Stage:** pre-seed/seed  •  "
+        f"**Funding ceiling:** "
+        f"${settings.max_total_funding:,.0f}"
+    )
+
+
+    st.divider()
+
+
+    # ------------------------------------------------------------------------
+    # CONNECTION STATUS
+    # ------------------------------------------------------------------------
+
+    st.markdown(
+        "### System status"
     )
 
     openrouter_ready = bool(
@@ -950,244 +814,61 @@ if page == "Dashboard":
         ).strip()
     )
 
-    s1, s2, s3 = st.columns(3)
-
-    with s1:
-
-        st.markdown(
-            f"""
-            <div class="nv-status">
-                <div class="nv-status-title">
-                    Research AI
-                </div>
-                <div class="nv-status-value">
-                    {"● Online" if openrouter_ready else "● Missing key"}
-                </div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-
-    with s2:
-
-        st.markdown(
-            f"""
-            <div class="nv-status">
-                <div class="nv-status-title">
-                    Web Research
-                </div>
-                <div class="nv-status-value">
-                    {"● Online" if tavily_ready else "● Missing key"}
-                </div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-
-    with s3:
-
-        st.markdown(
-            f"""
-            <div class="nv-status">
-                <div class="nv-status-title">
-                    Google Sheets
-                </div>
-                <div class="nv-status-value">
-                    {"● Connected" if google_ready else "● Missing credentials"}
-                </div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
+    status_col1, status_col2, status_col3 = st.columns(3)
 
 
-    st.markdown("<br>", unsafe_allow_html=True)
+    with status_col1:
+
+        if openrouter_ready:
+            st.success(
+                "OpenRouter configured"
+            )
+        else:
+            st.error(
+                "OpenRouter key missing"
+            )
 
 
-    # ------------------------------------------------------------------------
-    # SOURCING CONTROLS
-    # ------------------------------------------------------------------------
+    with status_col2:
 
-    st.markdown(
-        '<div class="nv-section-label">Run configuration</div>',
-        unsafe_allow_html=True,
-    )
-
-    st.markdown(
-        "### Sourcing controls"
-    )
-
-    c1, c2, c3 = st.columns(3)
-
-    with c1:
-
-        target = st.number_input(
-            "Target new companies",
-            min_value=1,
-            max_value=100,
-            value=25,
-            step=1,
-            help="Maximum number of new companies to accept.",
-        )
-
-    with c2:
-
-        max_partners = st.number_input(
-            "Partners per run",
-            min_value=1,
-            max_value=50,
-            value=int(settings.max_partners),
-            step=1,
-            help="Maximum partner sources to process.",
-        )
-
-    with c3:
-
-        max_research = st.number_input(
-            "Deep research limit",
-            min_value=1,
-            max_value=200,
-            value=int(settings.max_deep_research),
-            step=1,
-            help="Maximum deep company research calls.",
-        )
+        if tavily_ready:
+            st.success(
+                "Tavily configured"
+            )
+        else:
+            st.error(
+                "Tavily key missing"
+            )
 
 
-    # ------------------------------------------------------------------------
-    # CRITERIA
-    # ------------------------------------------------------------------------
+    with status_col3:
 
-    st.markdown(
-        "### Investment criteria"
-    )
-
-    criteria_1, criteria_2, criteria_3 = st.columns(3)
-
-    with criteria_1:
-
-        st.markdown(
-            """
-            **Business model**
-
-            B2B required
-            """
-        )
-
-    with criteria_2:
-
-        st.markdown(
-            """
-            **Stage**
-
-            Pre-seed / Seed
-            """
-        )
-
-    with criteria_3:
-
-        st.markdown(
-            f"""
-            **Funding ceiling**
-
-            ${settings.max_total_funding:,.0f}
-            """
-        )
+        if google_ready:
+            st.success(
+                "Google Sheets configured"
+            )
+        else:
+            st.error(
+                "Google service account missing"
+            )
 
 
     st.divider()
 
 
     # ------------------------------------------------------------------------
-    # GEOGRAPHIC ELIGIBILITY
+    # START SOURCING
     # ------------------------------------------------------------------------
 
-    st.markdown(
-        "### Geographic eligibility"
-    )
-
-    st.info(
-        "Eligible headquarters: "
-        + ", ".join(ELIGIBLE_COUNTRIES)
-    )
-
-    st.caption(
-        "Hard Python-level filter. An AI response cannot override this rule."
-    )
-
-
-    st.divider()
-
-
-    # ------------------------------------------------------------------------
-    # START RUN
-    # ------------------------------------------------------------------------
-
-    st.markdown(
-        "### Launch sourcing run"
-    )
-
-    st.caption(
-        "The engine will research candidates, verify eligibility, "
-        "deduplicate against Active Sourcing, and write accepted companies."
-    )
-
-    start_run = st.button(
+    if st.button(
         "🚀 Start sourcing",
         type="primary",
         use_container_width=True,
-    )
-
-
-    if start_run:
-
-        if not openrouter_ready:
-
-            st.error(
-                "OpenRouter API key is missing."
-            )
-
-            st.stop()
-
-        if not tavily_ready:
-
-            st.error(
-                "Tavily API key is missing."
-            )
-
-            st.stop()
-
-        if not google_ready:
-
-            st.error(
-                "Google service account credentials are missing."
-            )
-
-            st.stop()
-
+    ):
 
         started = datetime.now(
             timezone.utc
         ).isoformat()
-
-
-        st.session_state.last_report = None
-        st.session_state.last_run_id = None
-
-
-        st.markdown(
-            """
-            <div class="nv-result">
-                <div class="nv-result-title">
-                    Sourcing run in progress
-                </div>
-                <div class="nv-result-subtitle">
-                    Researching partner sources and validating candidates.
-                </div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-
 
         progress = st.progress(0)
         status = st.empty()
@@ -1243,8 +924,8 @@ if page == "Dashboard":
                     )
 
                 except Exception:
-
                     pass
+
 
                 if message:
 
@@ -1254,7 +935,7 @@ if page == "Dashboard":
 
 
             # ---------------------------------------------------------------
-            # RUN ENGINE
+            # SOURCING ENGINE
             # ---------------------------------------------------------------
 
             status.info(
@@ -1342,15 +1023,10 @@ if page == "Dashboard":
                 report,
             )
 
-
-            st.session_state.last_report = report
-            st.session_state.last_run_id = run_id
-
-
             progress.progress(100)
 
             status.success(
-                f"Run #{run_id} completed successfully."
+                f"Run #{run_id} completed."
             )
 
 
@@ -1380,26 +1056,8 @@ if page == "Dashboard":
 
 
             # ---------------------------------------------------------------
-            # RESULT SUMMARY
+            # METRICS
             # ---------------------------------------------------------------
-
-            st.markdown(
-                f"""
-                <div class="nv-result">
-
-                    <div class="nv-result-title">
-                        Run #{run_id} complete
-                    </div>
-
-                    <div class="nv-result-subtitle">
-                        Target: {int(target)} companies
-                    </div>
-
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
-
 
             a, b, c, d = st.columns(4)
 
@@ -1419,7 +1077,7 @@ if page == "Dashboard":
             )
 
             d.metric(
-                "Errors",
+                "Partner errors",
                 len(errors),
             )
 
@@ -1436,70 +1094,13 @@ if page == "Dashboard":
 
                 accepted_details = report.get(
                     "accepted_details",
-                    [],
+                    accepted,
                 )
 
-                if accepted_details:
-
-                    display_data = []
-
-                    for item in accepted_details:
-
-                        display_data.append(
-                            {
-                                "Company": item.get(
-                                    "company",
-                                    "",
-                                ),
-
-                                "Country": item.get(
-                                    "country",
-                                    "",
-                                ),
-
-                                "Headquarters": item.get(
-                                    "headquarters",
-                                    "",
-                                ),
-
-                                "Sector": item.get(
-                                    "sector",
-                                    "",
-                                ),
-
-                                "Stage": item.get(
-                                    "stage",
-                                    "",
-                                ),
-
-                                "Partner": item.get(
-                                    "partner",
-                                    "",
-                                ),
-
-                                "Sheet row": item.get(
-                                    "row",
-                                    "",
-                                ),
-
-                                "Fields": item.get(
-                                    "fields",
-                                    "",
-                                ),
-                            }
-                        )
-
-                    st.dataframe(
-                        pd.DataFrame(display_data),
-                        use_container_width=True,
-                        hide_index=True,
-                    )
-
-                else:
-
-                    st.write(
-                        accepted
-                    )
+                st.dataframe(
+                    accepted_details,
+                    use_container_width=True,
+                )
 
             else:
 
@@ -1515,7 +1116,7 @@ if page == "Dashboard":
             if rejected:
 
                 with st.expander(
-                    f"Rejected candidates • {len(rejected)}"
+                    f"Rejected ({len(rejected)})"
                 ):
 
                     st.write(
@@ -1530,7 +1131,7 @@ if page == "Dashboard":
             if duplicates:
 
                 with st.expander(
-                    f"Duplicates skipped • {len(duplicates)}"
+                    f"Duplicates ({len(duplicates)})"
                 ):
 
                     st.write(
@@ -1545,7 +1146,7 @@ if page == "Dashboard":
             if errors:
 
                 with st.expander(
-                    f"Partner/API errors • {len(errors)}"
+                    f"Partner/API errors ({len(errors)})"
                 ):
 
                     st.write(
@@ -1558,7 +1159,7 @@ if page == "Dashboard":
             # ---------------------------------------------------------------
 
             with st.expander(
-                "View full run report"
+                "Full run report"
             ):
 
                 st.json(
@@ -1568,12 +1169,8 @@ if page == "Dashboard":
 
         except Exception as exc:
 
-            status.error(
-                "The sourcing run failed."
-            )
-
             st.error(
-                "The sourcing run could not be completed."
+                "The sourcing run failed."
             )
 
             st.exception(
@@ -1587,23 +1184,13 @@ if page == "Dashboard":
 
 elif page == "Run History":
 
-    st.markdown(
-        """
-        <div class="nv-hero">
-            <div class="nv-hero-eyebrow">
-                Operations
-            </div>
-            <div class="nv-hero-title">
-                Run History
-            </div>
-            <div class="nv-hero-subtitle">
-                Review previous sourcing runs, results and system activity.
-            </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
+    st.title(
+        "Run History"
     )
 
+    st.caption(
+        "Previous sourcing runs performed by the team."
+    )
 
     runs = database.list_runs(
         100
@@ -1616,12 +1203,14 @@ elif page == "Run History":
             "No sourcing runs have been recorded yet."
         )
 
+
     else:
+
+        import pandas as pd
 
         df = pd.DataFrame(
             runs
         )
-
 
         display_cols = [
             "id",
@@ -1636,40 +1225,33 @@ elif page == "Run History":
             "status",
         ]
 
-
         available_cols = [
             col
             for col in display_cols
             if col in df.columns
         ]
 
-
         st.dataframe(
             df[available_cols],
             use_container_width=True,
-            hide_index=True,
         )
 
 
         st.divider()
 
-
         st.markdown(
             "### Open run"
         )
-
 
         run_ids = [
             int(run["id"])
             for run in runs
         ]
 
-
         selected_run_id = st.selectbox(
             "Select a run",
             run_ids,
         )
-
 
         selected = database.get_run(
             int(selected_run_id)
@@ -1678,50 +1260,21 @@ elif page == "Run History":
 
         if selected:
 
-            st.markdown(
-                f"""
-                <div class="nv-result">
-
-                    <div class="nv-result-title">
-                        Run #{selected["id"]}
-                    </div>
-
-                    <div class="nv-result-subtitle">
-                        {selected["user_email"]}
-                    </div>
-
-                </div>
-                """,
-                unsafe_allow_html=True,
+            st.write(
+                f"**Run #{selected['id']}**"
             )
 
+            st.write(
+                f"Started: {selected['started_at']}"
+            )
 
-            r1, r2, r3 = st.columns(3)
+            st.write(
+                f"Finished: {selected['finished_at']}"
+            )
 
-            with r1:
-
-                st.caption("Started")
-
-                st.write(
-                    selected["started_at"]
-                )
-
-            with r2:
-
-                st.caption("Finished")
-
-                st.write(
-                    selected["finished_at"]
-                )
-
-            with r3:
-
-                st.caption("Target")
-
-                st.write(
-                    selected["target"]
-                )
-
+            st.write(
+                f"User: {selected['user_email']}"
+            )
 
             try:
 
@@ -1729,59 +1282,9 @@ elif page == "Run History":
                     selected["report_json"]
                 )
 
-                accepted = report.get(
-                    "accepted",
-                    [],
+                st.json(
+                    report
                 )
-
-                duplicates = report.get(
-                    "duplicates",
-                    [],
-                )
-
-                rejected = report.get(
-                    "rejected",
-                    [],
-                )
-
-                errors = report.get(
-                    "partner_errors",
-                    [],
-                )
-
-
-                a, b, c, d = st.columns(4)
-
-                a.metric(
-                    "Added",
-                    len(accepted),
-                )
-
-                b.metric(
-                    "Duplicates",
-                    len(duplicates),
-                )
-
-                c.metric(
-                    "Rejected",
-                    len(rejected),
-                )
-
-                d.metric(
-                    "Errors",
-                    len(errors),
-                )
-
-
-                with st.expander(
-                    "Full run report",
-                    expanded=True,
-                ):
-
-                    st.json(
-                        report
-                    )
-
 
             except Exception:
 
@@ -1805,21 +1308,12 @@ elif page == "Admin":
         st.stop()
 
 
-    st.markdown(
-        """
-        <div class="nv-hero">
-            <div class="nv-hero-eyebrow">
-                Administration
-            </div>
-            <div class="nv-hero-title">
-                Team Administration
-            </div>
-            <div class="nv-hero-subtitle">
-                Manage nVentures sourcing platform accounts and access.
-            </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
+    st.title(
+        "Team Administration"
+    )
+
+    st.caption(
+        "Create and manage team accounts."
     )
 
 
@@ -1893,9 +1387,6 @@ elif page == "Admin":
                     )
 
 
-    st.divider()
-
-
     # ------------------------------------------------------------------------
     # EXISTING USERS
     # ------------------------------------------------------------------------
@@ -1912,7 +1403,6 @@ elif page == "Admin":
         st.dataframe(
             users,
             use_container_width=True,
-            hide_index=True,
         )
 
     else:
@@ -1920,9 +1410,6 @@ elif page == "Admin":
         st.info(
             "No users found."
         )
-
-
-    st.divider()
 
 
     # ------------------------------------------------------------------------
