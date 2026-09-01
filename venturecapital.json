@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "nventures-sourcing",
+  "private_key_id": "89be97b0aa5eeaa2df5861f1c4c8b119b3a50993",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQC13q7UT+J/l0vM\nnhezernFrKfLBPwxU1FRPiBbE3bV6DgVrrugCGpidg0CmmKYNqpd4zp9DDpwbPSe\ntpr6sCc4sntmYxCPwWjJKDmTHdkUrvteNhTwZWKMQ9cu5m7VjKCCAbPWWKyCbJn4\nWC3BgBrvFf/Fw/F8H4dk7DWCcJEZX2b20PTwWBNGvhU17tdAmHS2hLnVrXzsXFBN\n39De/4JAMEGbq+0ZyJguJroXjouLAR9v8RVY0GyO6/SKU+y2SECMcmaxtBesTOjW\nlUoa6miDsBwnjHKhTAgTUHyuGC35DJX0C55NHiR1PKjayYY9BhBTawcDkqyCB7/v\nGAssGlIDAgMBAAECggEANOr3WcVotRFTt9TkNo/mD/Nd2z+3Fa8VgRsflQCD2le4\nQe7Wnwjz03Rf8rrzJzD4v1rHgO0W7/Fz995QF9M7hk7AgxkeD4YKNEWlAv5zVIZZ\nk58O1qfZVdDDgtz/sNk7NrjCGAMzJrvszQrzPVNGAv0Wr/eEg0Y1QhNMuoiAX64Z\n+sUt5jHo06mcm9QFodnBgJe587RRafjy7hgOYmrHipJLvuLnbF/COc0ueVwhP1fA\nK+jzS1HcyktwqkimyH0mnguFm0t2FzJWcW9IPyqAbCYIeYbMWsXVMNxT1mTMB45S\n0v2S0xEQDiqHN6oTgncH3s5oPT1NBy0qiz6V0JiAsQKBgQDhXP4Pd6u3MoOey1u6\ns/F/6Aa/1Ufzt7XEzMebo7kJedtIpZicz2rk95C3778epk3Gf4NuAcnfAf6GLavD\nAaDyK1juCpEBuQOXajKWkqZt37QJ8H8Vu8FILspR/MbfzG6P5GmYCFK3QFVRsm47\n/IjDSCCOb7NY2ssTV1aj+xdXmQKBgQDOmAyx9HQmMnSWwEVcj6rmAfXQSNV8IDnz\ntUAnc4KW1BTMDWmlLC8wI1si6yKH7MFsWy6G42UCX0QkrRu13C1rd+71j5a8gS6i\nVqd+svyvTfcKt2d/3GWoMDhmc2SvbuQ0QIVrHyOj4iGSmcQ3izEjBrkC4tEvzWNX\nfJTpfcxH+wKBgQCzy/st3+3xpK15vQib9gAQac8osUJMYR71ueLuezqfIsceOG9/\ne8PulMyy0uWJ0Ghwmz8CPw8NiovEBR/p3pzHWGoE0A1McI06+hEOLEX3lugOnf7m\nGftkWWA09RS9bF4xEqxkDQ/g/8SR/2cPGLUMB7lhqiBOHZCzB5UqEqNW0QKBgFS5\nnLM6eovTs2bDsW51aPPtJ99kj1DZcorU8Vt8jrjGf0Tz1ziq9ys5xL18SuwNl4GV\nn24oQZuIcEzORYf+pQ3m4LQKUBo8rGBdQ1G9m81VHxRhBOw1+ebQ58B0YH1l7+bR\n8yVsXtRt/7C8qPDSf7NKpYNee8Wr6KrPZ86eDbITAoGBAJCkPewGEoTi4oShotus\nRjhMxOBweVQZNZylotprAOwjIpGe2nU9NTixfVakEVRYNjsR+uz9JQ5Cgo1qnSN1\nUhgVCUUGBnr4BSSzzAuaehmdwoSpczy1doktOTxCDQcOj2WRyi97jqXysSt404Ad\nHjhFOonWGm0QFvtKM1mGpsks\n-----END PRIVATE KEY-----\n",
+  "client_email": "nventures-sourcing@nventures-sourcing.iam.gserviceaccount.com",
+  "client_id": "109422655173782072475",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/nventures-sourcing%40nventures-sourcing.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}
