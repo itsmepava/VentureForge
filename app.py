@@ -37,20 +37,12 @@ LOGO_PATH = APP_DIR / "assets" / "nventures_logo.png"
 from pathlib import Path
 
 APP_DIR = Path(__file__).resolve().parent
-LOGO_PATH = APP_DIR / "assets" / "nventures_logo.png"
+LOGO_PATH = BASE_DIR / "assets" / "nventures_logo.png"
 
-st.sidebar.write("Logo path:", str(LOGO_PATH))
-st.sidebar.write("Logo exists:", LOGO_PATH.exists())
-
-if LOGO_PATH.exists():
-    st.sidebar.image(str(LOGO_PATH))
+if LOGO_PATH.is_file():
+    st.logo(str(LOGO_PATH), size="large")
 else:
-    st.sidebar.error("Logo file not found")
-
-page = st.sidebar.radio(
-    "Navigate",
-    ["Dashboard", "Run History", "Admin"],
-)
+    st.sidebar.markdown("# nVentures")
 
 if page == "Dashboard":
     st.title("AI Company Sourcing")
