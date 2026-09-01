@@ -660,24 +660,19 @@ page = st.sidebar.radio(
 # SIDEBAR CREDIT
 # ============================================================================
 
-st.sidebar.markdown(
-    dedent("""
-    <div class="nv-credit">
-        <div class="nv-credit-small">
-            Built by
-        </div>
-
-        <div class="nv-credit-name">
-            Pavara Kekulawala
-        </div>
-
-        <div class="nv-credit-product">
-            nVentures Sourcing Platform
-        </div>
+st.sidebar.html("""
+<div class="nv-credit">
+    <div class="nv-credit-small">
+        Built by
     </div>
-    """),
-    unsafe_allow_html=True,
-)
+    <div class="nv-credit-name">
+        Pavara Kekulawala
+    </div>
+    <div class="nv-credit-product">
+        nVentures Sourcing Platform
+    </div>
+</div>
+""")
 
 
 # ============================================================================
@@ -686,53 +681,43 @@ st.sidebar.markdown(
 
 if page == "Dashboard":
 
-    st.markdown(
-        dedent("""
-        <div class="nv-hero">
+   st.html("""
+<div class="nv-hero">
+    <div class="nv-hero-title">
+        Sourcing Intelligence
+    </div>
 
-            <div class="nv-hero-title">
-                Sourcing Intelligence
-            </div>
-
-            <div class="nv-hero-subtitle">
-                AI-powered company discovery, research and investment sourcing.
-            </div>
-
-        </div>
-        """),
-        unsafe_allow_html=True,
-    )
+    <div class="nv-hero-subtitle">
+        AI-powered company discovery, research and investment sourcing.
+    </div>
+</div>
+""")
 
 
     # ------------------------------------------------------------------------
     # GEOGRAPHIC FOCUS
     # ------------------------------------------------------------------------
 
-    st.markdown(
-        dedent("""
-        <div class="nv-focus">
+    st.html("""
+<div class="nv-focus">
+    <div class="nv-focus-title">
+        🌐 Geographic Focus — Hard Filter
+    </div>
 
-            <div class="nv-focus-title">
-                🌐 Geographic Focus — Hard Filter
-            </div>
+    <div class="nv-focus-main">
+        South Asia + Singapore
+    </div>
 
-            <div class="nv-focus-main">
-                South Asia + Singapore
-            </div>
+    <div class="nv-focus-text">
+        Afghanistan, Bangladesh, Bhutan, India, Maldives,
+        Nepal, Pakistan, Singapore and Sri Lanka.
+    </div>
 
-            <div class="nv-focus-text">
-                Afghanistan, Bangladesh, Bhutan, India, Maldives,
-                Nepal, Pakistan, Singapore and Sri Lanka.
-            </div>
-
-            <div class="nv-focus-text">
-                Companies must be headquartered in an eligible country.
-            </div>
-
-        </div>
-        """),
-        unsafe_allow_html=True,
-    )
+    <div class="nv-focus-text">
+        Companies must be headquartered in an eligible country.
+    </div>
+</div>
+""")
 
 
     # ------------------------------------------------------------------------
