@@ -590,20 +590,14 @@ user = st.session_state.user
 # SIDEBAR BRANDING
 # ============================================================================
 
-# Streamlit's dedicated logo API.
-# This places the logo in the app's navigation/sidebar area.
+# Use the sidebar image directly so the full nVentures logo is visible.
+# Do not use st.logo() here: Streamlit renders that API as a small navigation
+# logo rather than the larger branded sidebar treatment we want.
 if LOGO_PATH.is_file():
-    try:
-        st.logo(
-            str(LOGO_PATH),
-            size="large",
-        )
-    except Exception:
-        # Compatibility fallback for older Streamlit versions.
-        st.sidebar.image(
-            str(LOGO_PATH),
-            use_container_width=True,
-        )
+    st.sidebar.image(
+        str(LOGO_PATH),
+        use_container_width=True,
+    )
 else:
     st.sidebar.markdown(
         "# nVentures"
