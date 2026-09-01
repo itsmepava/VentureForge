@@ -680,21 +680,21 @@ st.sidebar.markdown(
 if page == "Dashboard":
 
     st.markdown(
-    dedent("""
-    <div class="nv-hero">
+        """
+        <div class="nv-hero">
 
-        <div class="nv-hero-title">
-            Sourcing Intelligence
+            <div class="nv-hero-title">
+                Sourcing Intelligence
+            </div>
+
+            <div class="nv-hero-subtitle">
+                AI-powered company discovery, research and investment sourcing.
+            </div>
+
         </div>
-
-        <div class="nv-hero-subtitle">
-            AI-powered company discovery, research and investment sourcing.
-        </div>
-
-    </div>
-    """),
-    unsafe_allow_html=True,
-)
+        """,
+        unsafe_allow_html=True,
+    )
 
 
     # ------------------------------------------------------------------------
