@@ -34,14 +34,18 @@ from pathlib import Path
 APP_DIR = Path(__file__).resolve().parent
 LOGO_PATH = APP_DIR / "assets" / "nventures_logo.png"
 
-if LOGO_PATH.is_file():
-    st.sidebar.image(str(LOGO_PATH), use_container_width=True)
+from pathlib import Path
+
+APP_DIR = Path(__file__).resolve().parent
+LOGO_PATH = APP_DIR / "assets" / "nventures_logo.png"
+
+st.sidebar.write("Logo path:", str(LOGO_PATH))
+st.sidebar.write("Logo exists:", LOGO_PATH.exists())
+
+if LOGO_PATH.exists():
+    st.sidebar.image(str(LOGO_PATH))
 else:
-    st.sidebar.markdown("# nVentures")
-st.sidebar.caption(user["email"])
-if st.sidebar.button("Sign out"):
-    st.session_state.user = None
-    st.rerun()
+    st.sidebar.error("Logo file not found")
 
 page = st.sidebar.radio(
     "Navigate",
