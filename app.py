@@ -29,7 +29,12 @@ if admin_email and admin_password:
 
 user = require_login()
 
-st.sidebar.title("nVentures")
+LOGO_PATH = BASE_DIR / "assets" / "nventures_logo.png"
+
+if LOGO_PATH.exists():
+    st.sidebar.image(str(LOGO_PATH), use_container_width=True)
+else:
+    st.sidebar.markdown("# nVentures")
 st.sidebar.caption(user["email"])
 if st.sidebar.button("Sign out"):
     st.session_state.user = None
