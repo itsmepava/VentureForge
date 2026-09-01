@@ -96,6 +96,17 @@ st.markdown(
         color: #F5F7FA;
     }
 
+    /* Slightly larger nVentures logo */
+    [data-testid="stLogo"] {
+        width: 155px !important;
+    }
+
+    [data-testid="stLogo"] img {
+        width: 155px !important;
+        max-width: 155px !important;
+        height: auto !important;
+    }
+
 
     /* ================================================================
        GENERAL TEXT
