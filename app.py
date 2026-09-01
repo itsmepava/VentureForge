@@ -29,9 +29,12 @@ if admin_email and admin_password:
 
 user = require_login()
 
-LOGO_PATH = BASE_DIR / "assets" / "nventures_logo.png"
+from pathlib import Path
 
-if LOGO_PATH.exists():
+APP_DIR = Path(__file__).resolve().parent
+LOGO_PATH = APP_DIR / "assets" / "nventures_logo.png"
+
+if LOGO_PATH.is_file():
     st.sidebar.image(str(LOGO_PATH), use_container_width=True)
 else:
     st.sidebar.markdown("# nVentures")
