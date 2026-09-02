@@ -1,5 +1,6 @@
 import textwrap
 import base64
+from html import escape as html_escape
 from dotenv import load_dotenv
 import os
 import json
@@ -80,6 +81,98 @@ def logo_data_uri() -> str:
     return f"data:image/png;base64,{encoded}"
 
 
+def value_from(item, *keys, default="—"):
+    """Read the first useful value from a result record."""
+    if not isinstance(item, dict):
+        return default
+    for key in keys:
+        value = item.get(key)
+        if value is not None and str(value).strip():
+            return str(value).strip()
+    return default
+
+
+def company_key(item) -> str:
+    """Create a stable review key for a company within one run."""
+    name = value_from(item, "company_name", "name", "company")
+    website = value_from(item, "website", "url", "company_url", default="")
+    return f"{name.lower()}|{website.lower()}"
+
+
+def render_company_cards(companies, run_id, reviewer_email) -> None:
+    """Render accepted companies as reviewable investment cards."""
+    if isinstance(companies, dict):
+        companies = [companies]
+
+    for index, company in enumerate(companies or []):
+        name = value_from(company, "company_name", "name", "company", default="Unnamed company")
+        country = value_from(company, "headquarters", "hq_country", "country", "location")
+        stage = value_from(company, "stage", "funding_stage")
+        funding = value_from(company, "total_funding", "funding", "funding_amount")
+        sector = value_from(company, "sector", "industry", "vertical")
+        website = value_from(company, "website", "url", "company_url", default="")
+        reason = value_from(
+            company,
+            "reason",
+            "why_it_fits",
+            "investment_thesis",
+            "summary",
+            default="Passed the sourcing criteria.",
+        )
+        key = company_key(company)
+        existing_review = database.get_review(run_id, key) or {}
+        current_status = existing_review.get("status", "Review")
+        current_notes = existing_review.get("notes", "")
+
+        with st.expander(
+            f"{name}  ·  {country}",
+            expanded=index == 0,
+        ):
+            detail_cols = st.columns(4)
+            detail_cols[0].markdown(f"**Sector**  \n{sector}")
+            detail_cols[1].markdown(f"**Stage**  \n{stage}")
+            detail_cols[2].markdown(f"**Funding**  \n{funding}")
+            if website.startswith(("http://", "https://")):
+                detail_cols[3].markdown(f"[Open website ↗]({website})")
+            else:
+                detail_cols[3].markdown("**Website**  \n—")
+
+            st.caption(reason)
+
+            with st.form(f"review_form_{run_id}_{index}"):
+                review_cols = st.columns([1, 2, 0.65])
+                review_status = review_cols[0].selectbox(
+                    "Review status",
+                    ["Review", "High priority", "Saved", "Not a fit"],
+                    index=["Review", "High priority", "Saved", "Not a fit"].index(
+                        current_status
+                    ) if current_status in {
+                        "Review",
+                        "High priority",
+                        "Saved",
+                        "Not a fit",
+                    } else 0,
+                    key=f"review_status_{run_id}_{index}",
+                )
+                review_notes = review_cols[1].text_input(
+                    "Internal note",
+                    value=current_notes,
+                    placeholder="Add a note for the team",
+                    key=f"review_notes_{run_id}_{index}",
+                )
+                save_review = review_cols[2].form_submit_button("Save review")
+
+            if save_review:
+                database.save_review(
+                    run_id,
+                    key,
+                    review_status,
+                    review_notes,
+                    reviewer_email,
+                )
+                st.success("Review saved.")
+
+
 def render_run_report(report: dict, run_id=None) -> None:
     """Render a compact, reusable result view for a sourcing run."""
     accepted = report.get("accepted", [])
@@ -99,13 +192,20 @@ def render_run_report(report: dict, run_id=None) -> None:
     metric_cols[3].metric("Partner errors", len(errors))
 
     if accepted:
-        st.markdown("#### New companies")
+        st.markdown("#### Review queue")
         accepted_details = report.get("accepted_details", accepted)
-        st.dataframe(
-            accepted_details,
-            use_container_width=True,
-            hide_index=True,
-        )
+        if run_id is not None:
+            render_company_cards(
+                accepted_details,
+                run_id,
+                st.session_state.user["email"] if st.session_state.user else "",
+            )
+        with st.expander("Open table view"):
+            st.dataframe(
+                accepted_details,
+                use_container_width=True,
+                hide_index=True,
+            )
     else:
         st.info("No new companies were accepted during this run.")
 
@@ -123,6 +223,31 @@ def render_run_report(report: dict, run_id=None) -> None:
 
     with st.expander("Full run report"):
         st.json(report)
+
+
+def render_dashboard_metrics() -> None:
+    """Show a quick operating snapshot above the run controls."""
+    runs = database.list_runs(100)
+    completed = [run for run in runs if run.get("status") == "completed"]
+    total_added = sum(int(run.get("accepted_count") or 0) for run in completed)
+    total_errors = sum(int(run.get("partner_error_count") or 0) for run in completed)
+    success_rate = (
+        f"{round((len(completed) / len(runs)) * 100)}%"
+        if runs
+        else "—"
+    )
+    last_run = runs[0] if runs else None
+    last_run_label = "No runs yet"
+    if last_run:
+        last_run_label = f"Run #{last_run.get('id')}"
+
+    metrics = st.columns(4)
+    metrics[0].metric("Companies added", total_added)
+    metrics[1].metric("Runs completed", len(completed))
+    metrics[2].metric("Success rate", success_rate)
+    metrics[3].metric("Last activity", last_run_label)
+    if total_errors:
+        st.caption(f"{total_errors} partner/API errors recorded across the latest 100 runs.")
 
 
 # ============================================================================
@@ -655,6 +780,44 @@ html(
         margin-top: 0.35rem;
     }
 
+    .nv-pipeline {
+        background: rgba(17, 18, 23, 0.88);
+        border: 1px solid var(--nv-line);
+        border-radius: 16px;
+        display: flex;
+        gap: 0.55rem;
+        margin: 1.25rem 0 1.6rem;
+        padding: 0.8rem;
+    }
+
+    .nv-pipeline-step {
+        border-radius: 10px;
+        color: var(--nv-text-dim);
+        flex: 1;
+        font-size: 0.75rem;
+        padding: 0.7rem 0.8rem;
+    }
+
+    .nv-pipeline-step.is-active {
+        background: var(--nv-accent-soft);
+        color: #ffffff;
+    }
+
+    .nv-pipeline-step.is-done {
+        color: var(--nv-good);
+    }
+
+    .nv-pipeline-label {
+        display: block;
+        font-weight: 700;
+        margin-bottom: 0.2rem;
+    }
+
+    .nv-pipeline-message {
+        color: var(--nv-text-dim);
+        font-size: 0.7rem;
+    }
+
     div[data-testid="stMetric"] {
         background: var(--nv-panel);
         border: 1px solid var(--nv-line);
@@ -1043,6 +1206,8 @@ if page == "Dashboard":
         """
     )
 
+    render_dashboard_metrics()
+
 
     # ------------------------------------------------------------------------
     # GEOGRAPHIC FOCUS
@@ -1111,6 +1276,13 @@ if page == "Dashboard":
             value=int(settings.max_deep_research),
             step=1,
         )
+
+    test_mode = st.checkbox(
+        "Quick validation run",
+        help="Caps the run at 5 companies and 10 deep-research items for a faster, lower-cost test.",
+    )
+    if test_mode:
+        st.caption("Quick validation caps this run at 5 companies and 10 deep-research items.")
 
 
     st.divider()
@@ -1241,6 +1413,38 @@ if page == "Dashboard":
 
         progress = st.progress(0)
         status = st.empty()
+        pipeline = st.empty()
+        run_target = min(int(target), 5) if test_mode else int(target)
+        run_research = min(int(max_research), 10) if test_mode else int(max_research)
+
+        def show_pipeline(active_step, message):
+            labels = ["Connect", "Discover", "Research", "Complete"]
+            steps = []
+            for step_index, label in enumerate(labels):
+                state = ""
+                if step_index < active_step:
+                    state = " is-done"
+                elif step_index == active_step:
+                    state = " is-active"
+                detail = message if step_index == active_step else (
+                    "Complete" if step_index < active_step else "Waiting"
+                )
+                steps.append(
+                    f'<div class="nv-pipeline-step{state}">'
+                    f'<span class="nv-pipeline-label">{label}</span>'
+                    f'<span class="nv-pipeline-message">{html_escape(detail)}</span>'
+                    "</div>"
+                )
+            pipeline.markdown(
+                clean_html(
+                    '<div class="nv-pipeline">'
+                    + "".join(steps)
+                    + "</div>"
+                ),
+                unsafe_allow_html=True,
+            )
+
+        show_pipeline(0, "Connecting to Google Sheets")
 
 
         try:
@@ -1269,6 +1473,7 @@ if page == "Dashboard":
             status.success(
                 "Google Sheets connected."
             )
+            show_pipeline(1, "Partner sources ready")
 
 
             # ---------------------------------------------------------------
@@ -1310,6 +1515,7 @@ if page == "Dashboard":
             status.info(
                 "Starting sourcing engine..."
             )
+            show_pipeline(2, "Researching candidates")
 
             report = run_sourcing(
                 sourcing_ws=sourcing_ws,
@@ -1328,17 +1534,13 @@ if page == "Dashboard":
 
                 openrouter_model=settings.openrouter_model,
 
-                target_companies=int(
-                    target
-                ),
+                target_companies=run_target,
 
                 max_partners=int(
                     max_partners
                 ),
 
-                max_deep_research=int(
-                    max_research
-                ),
+                max_deep_research=run_research,
 
                 max_candidates_per_partner=(
                     settings.max_candidates_per_partner
@@ -1388,7 +1590,7 @@ if page == "Dashboard":
                 user["email"],
                 started,
                 finished,
-                int(target),
+                run_target,
                 report,
             )
 
@@ -1397,6 +1599,7 @@ if page == "Dashboard":
             status.success(
                 f"Run #{run_id} completed."
             )
+            show_pipeline(3, f"Run #{run_id} complete")
 
 
             st.session_state.last_report = report
@@ -1524,8 +1727,9 @@ elif page == "Run History":
                     selected["report_json"]
                 )
 
-                st.json(
-                    report
+                render_run_report(
+                    report,
+                    selected["id"],
                 )
 
             except Exception:
@@ -1533,6 +1737,55 @@ elif page == "Run History":
                 st.code(
                     selected["report_json"]
                 )
+
+        st.divider()
+        st.markdown("### Compare runs")
+        st.caption("See how sourcing performance changed between two runs.")
+
+        if len(run_ids) >= 2:
+            compare_left, compare_right = st.columns(2)
+            with compare_left:
+                baseline_id = st.selectbox(
+                    "Baseline run",
+                    run_ids,
+                    index=1,
+                    key="baseline_run_id",
+                )
+            with compare_right:
+                comparison_id = st.selectbox(
+                    "Compare with",
+                    run_ids,
+                    index=0,
+                    key="comparison_run_id",
+                )
+
+            baseline = database.get_run(int(baseline_id))
+            comparison = database.get_run(int(comparison_id))
+            if baseline and comparison and baseline_id != comparison_id:
+                comparison_rows = []
+                for label, key in [
+                    ("Target", "target"),
+                    ("Added", "accepted_count"),
+                    ("Duplicates", "duplicate_count"),
+                    ("Rejected", "rejected_count"),
+                    ("Partner errors", "partner_error_count"),
+                ]:
+                    comparison_rows.append(
+                        {
+                            "Metric": label,
+                            f"Run #{baseline_id}": baseline.get(key, 0),
+                            f"Run #{comparison_id}": comparison.get(key, 0),
+                        }
+                    )
+                st.dataframe(
+                    comparison_rows,
+                    use_container_width=True,
+                    hide_index=True,
+                )
+            else:
+                st.info("Choose two different runs to compare.")
+        else:
+            st.caption("Complete at least two runs to unlock comparison.")
 
 
 # ============================================================================
