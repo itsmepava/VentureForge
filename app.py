@@ -1,3 +1,4 @@
+import textwrap
 from dotenv import load_dotenv
 import os
 import json
@@ -45,36 +46,91 @@ st.set_page_config(
 
 
 # ============================================================================
+# HTML HELPER
+# ----------------------------------------------------------------------------
+# IMPORTANT: Streamlit's st.markdown() runs your string through a Markdown
+# parser BEFORE it applies unsafe_allow_html. Markdown treats any line
+# indented by 4+ spaces as a preformatted code block, so an HTML string
+# written with the same indentation as your surrounding Python code gets
+# displayed as literal text instead of being rendered. textwrap.dedent()
+# strips that common leading whitespace so Markdown sees it as normal text
+# and correctly hands the tags off to the HTML renderer. ALWAYS use this
+# helper (not st.markdown directly) for any HTML you add later.
+# ============================================================================
+
+def html(content: str) -> None:
+    st.markdown(textwrap.dedent(content), unsafe_allow_html=True)
+
+
+# ============================================================================
 # DARK UI / BRAND STYLING
 # ============================================================================
 
-st.markdown(
+html(
     """
     <style>
 
+    @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&display=swap');
+
     /* ================================================================
-       GLOBAL
+       DESIGN TOKENS
+       ================================================================
+       Background carries a faint blue cast rather than flat near-black,
+       so it reads as intentional rather than a default dark theme.
+       The brand blue is reserved for exactly two jobs: the primary
+       button and the single accent panel border. Everything else stays
+       quiet (hairline borders, no shadows) so those two things read as
+       deliberate, not decorative repetition.
        ================================================================ */
 
+    :root {
+        --nv-bg: #0A0C10;
+        --nv-panel: #12151B;
+        --nv-panel-quiet: #0E1116;
+        --nv-line: #23272F;
+        --nv-text: #EDEFF3;
+        --nv-text-dim: #8B93A1;
+        --nv-accent: #2F6FED;
+        --nv-accent-soft: #1A2740;
+        --nv-good: #3FBF7F;
+        --nv-bad: #E5604D;
+    }
+
     .stApp {
-        background: #080808;
-        color: #F5F7FA;
+        background: var(--nv-bg);
+        color: var(--nv-text);
     }
 
     [data-testid="stAppViewContainer"] {
-        background: #080808;
+        background: var(--nv-bg);
     }
 
     [data-testid="stHeader"] {
         background: transparent;
     }
 
-    #MainMenu {
+    #MainMenu, footer {
         visibility: hidden;
     }
 
-    footer {
-        visibility: hidden;
+
+    /* ================================================================
+       TYPOGRAPHY
+       ================================================================ */
+
+    h1, h2, h3, h4 {
+        font-family: 'Space Grotesk', sans-serif;
+        color: var(--nv-text) !important;
+        letter-spacing: -0.01em;
+        font-weight: 600;
+    }
+
+    p, span, label, .stMarkdown {
+        color: var(--nv-text);
+    }
+
+    .stCaption {
+        color: var(--nv-text-dim) !important;
     }
 
 
@@ -83,116 +139,93 @@ st.markdown(
        ================================================================ */
 
     section[data-testid="stSidebar"] {
-        background: #050505;
-        border-right: 1px solid #242424;
+        background: var(--nv-panel-quiet);
+        border-right: 1px solid var(--nv-line);
     }
 
     section[data-testid="stSidebar"] > div {
-        background: #050505;
+        background: var(--nv-panel-quiet);
     }
 
     section[data-testid="stSidebar"] * {
-        color: #F5F7FA;
-    }
-
-
-    /* ================================================================
-       GENERAL TEXT
-       ================================================================ */
-
-    p,
-    span,
-    label {
-        color: inherit;
-    }
-
-    .stMarkdown {
-        color: #F5F7FA;
-    }
-
-    .stCaption {
-        color: #A7ADB7 !important;
-    }
-
-
-    /* ================================================================
-       HEADINGS
-       ================================================================ */
-
-    h1,
-    h2,
-    h3,
-    h4 {
-        color: #F5F7FA !important;
-        letter-spacing: -0.02em;
-    }
-
-    h1 {
-        font-weight: 750;
-    }
-
-    h2,
-    h3 {
-        font-weight: 700;
+        color: var(--nv-text);
     }
 
 
     /* ================================================================
        HERO
+       ----------------------------------------------------------------
+       This is the one bold element on the page. Larger type, a subtle
+       gradient wash instead of a flat card, and a thin accent rule on
+       the left edge instead of a full border everywhere.
        ================================================================ */
 
     .nv-hero {
-        background: #050505;
-        border: 1px solid #252525;
-        border-radius: 16px;
-        padding: 30px 32px;
-        margin-bottom: 24px;
-        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
+        position: relative;
+        background:
+            radial-gradient(ellipse at top left, var(--nv-accent-soft), transparent 60%),
+            var(--nv-panel);
+        border: 1px solid var(--nv-line);
+        border-left: 3px solid var(--nv-accent);
+        border-radius: 4px;
+        padding: 40px 40px 36px 38px;
+        margin-bottom: 28px;
     }
 
     .nv-hero-title {
+        font-family: 'Space Grotesk', sans-serif;
         color: #FFFFFF !important;
-        font-size: 38px;
-        font-weight: 750;
+        font-size: 40px;
+        font-weight: 700;
         margin: 0;
+        line-height: 1.1;
     }
 
     .nv-hero-subtitle {
-        color: #A7ADB7 !important;
-        font-size: 16px;
-        margin-top: 8px;
+        color: var(--nv-text-dim) !important;
+        font-size: 15px;
+        margin-top: 12px;
+        max-width: 620px;
+        line-height: 1.55;
     }
 
 
     /* ================================================================
        GEOGRAPHIC FOCUS
+       ----------------------------------------------------------------
+       Deliberately quieter than the hero: no gradient, thin border,
+       clean type for the country list to read as fixed reference data
+       rather than prose.
        ================================================================ */
 
     .nv-focus {
-        background: #101923;
-        border: 1px solid #164B83;
-        border-radius: 12px;
-        padding: 18px;
-        margin: 10px 0 24px 0;
+        background: var(--nv-panel-quiet);
+        border: 1px solid var(--nv-line);
+        border-radius: 4px;
+        padding: 20px 22px;
+        margin: 4px 0 26px 0;
     }
 
     .nv-focus-title {
-        font-size: 14px;
-        font-weight: 700;
-        color: #65A9FF !important;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--nv-text);
+        margin-bottom: 4px;
     }
 
     .nv-focus-main {
-        font-size: 18px;
-        font-weight: 700;
+        font-family: 'Space Grotesk', sans-serif;
+        font-size: 20px;
+        font-weight: 600;
         color: #FFFFFF !important;
-        margin-top: 6px;
+        margin-top: 4px;
     }
 
     .nv-focus-text {
         font-size: 13px;
-        color: #B8C0CC !important;
-        margin-top: 7px;
+        color: var(--nv-text-dim) !important;
+        margin-top: 8px;
+        line-height: 1.6;
     }
 
 
@@ -201,18 +234,19 @@ st.markdown(
        ================================================================ */
 
     div[data-testid="stMetric"] {
-        background: #111111;
-        border: 1px solid #292929;
-        border-radius: 12px;
-        padding: 18px;
-        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.18);
+        background: var(--nv-panel);
+        border: 1px solid var(--nv-line);
+        border-radius: 4px;
+        padding: 16px 18px;
     }
 
     div[data-testid="stMetric"] label {
-        color: #9CA3AF !important;
+        color: var(--nv-text-dim) !important;
+        font-size: 12px;
     }
 
     div[data-testid="stMetric"] [data-testid="stMetricValue"] {
+        font-family: 'Space Grotesk', sans-serif;
         color: #FFFFFF !important;
     }
 
@@ -221,79 +255,60 @@ st.markdown(
        INPUTS
        ================================================================ */
 
-    div[data-baseweb="input"] {
-        background: #151515;
-        border-radius: 8px;
+    div[data-baseweb="input"],
+    div[data-baseweb="textarea"],
+    div[data-testid="stNumberInput"] > div {
+        background: var(--nv-panel);
+        border: 1px solid var(--nv-line) !important;
+        border-radius: 4px;
     }
 
-    div[data-baseweb="input"] input {
-        color: #FFFFFF !important;
+    div[data-baseweb="input"] input,
+    div[data-baseweb="textarea"] textarea,
+    div[data-testid="stNumberInput"] input {
+        color: var(--nv-text) !important;
     }
-
-    div[data-baseweb="textarea"] {
-        background: #151515;
-    }
-
-    div[data-baseweb="textarea"] textarea {
-        color: #FFFFFF !important;
-    }
-
-
-    /* ================================================================
-       SELECTBOX
-       ================================================================ */
 
     div[data-baseweb="select"] > div {
-        background: #151515;
-        border-color: #333333;
-        color: #FFFFFF;
-    }
-
-
-    /* ================================================================
-       NUMBER INPUT
-       ================================================================ */
-
-    div[data-testid="stNumberInput"] > div {
-        background: #151515;
-        border-radius: 8px;
-    }
-
-    div[data-testid="stNumberInput"] input {
-        color: #FFFFFF !important;
+        background: var(--nv-panel);
+        border-color: var(--nv-line);
+        color: var(--nv-text);
+        border-radius: 4px;
     }
 
 
     /* ================================================================
        BUTTONS
+       ----------------------------------------------------------------
+       Accent blue is reserved for the primary action only.
        ================================================================ */
 
     .stButton > button {
-        background: #151515;
-        color: #FFFFFF;
-        border: 1px solid #383838;
-        border-radius: 8px;
-        font-weight: 600;
+        background: var(--nv-panel);
+        color: var(--nv-text);
+        border: 1px solid var(--nv-line);
+        border-radius: 4px;
+        font-weight: 500;
         min-height: 42px;
     }
 
     .stButton > button:hover {
-        border-color: #0B74FF;
+        border-color: var(--nv-accent);
         color: #FFFFFF;
     }
 
     .stButton > button[kind="primary"] {
-        background: #0B74FF;
-        border: 1px solid #0B74FF;
+        background: var(--nv-accent);
+        border: 1px solid var(--nv-accent);
         color: #FFFFFF;
-        font-weight: 700;
-        border-radius: 8px;
+        font-weight: 600;
+        border-radius: 4px;
         min-height: 48px;
     }
 
     .stButton > button[kind="primary"]:hover {
-        background: #0866DD;
-        border-color: #0866DD;
+        background: #2560CC;
+        border-color: #2560CC;
     }
 
 
@@ -302,39 +317,30 @@ st.markdown(
        ================================================================ */
 
     div[data-testid="stAlert"] {
-        background: #151515;
-        border: 1px solid #303030;
-        color: #F5F7FA;
+        background: var(--nv-panel);
+        border: 1px solid var(--nv-line);
+        border-radius: 4px;
+        color: var(--nv-text);
     }
 
     div[data-testid="stAlert"] p {
-        color: #F5F7FA !important;
+        color: var(--nv-text) !important;
     }
 
 
     /* ================================================================
-       EXPANDERS
+       EXPANDERS / DATAFRAMES
        ================================================================ */
 
-    div[data-testid="stExpander"] {
-        background: #111111;
-        border: 1px solid #292929;
-        border-radius: 10px;
+    div[data-testid="stExpander"],
+    div[data-testid="stDataFrame"] {
+        background: var(--nv-panel);
+        border: 1px solid var(--nv-line);
+        border-radius: 4px;
     }
 
     div[data-testid="stExpander"] summary {
-        color: #FFFFFF !important;
-    }
-
-
-    /* ================================================================
-       DATAFRAMES
-       ================================================================ */
-
-    div[data-testid="stDataFrame"] {
-        background: #111111;
-        border: 1px solid #292929;
-        border-radius: 10px;
+        color: var(--nv-text) !important;
     }
 
 
@@ -343,7 +349,7 @@ st.markdown(
        ================================================================ */
 
     hr {
-        border-color: #292929 !important;
+        border-color: var(--nv-line) !important;
     }
 
 
@@ -352,30 +358,31 @@ st.markdown(
        ================================================================ */
 
     .nv-credit {
-        margin-top: 26px;
+        margin-top: 24px;
         padding: 14px;
-        border: 1px solid #303030;
-        border-radius: 10px;
-        background: #0B0B0B;
+        border: 1px solid var(--nv-line);
+        border-radius: 4px;
+        background: var(--nv-panel);
         text-align: center;
     }
 
     .nv-credit-small {
-        font-size: 12px;
-        color: #999999 !important;
-        margin-bottom: 5px;
+        font-size: 11px;
+        color: var(--nv-text-dim) !important;
+        margin-bottom: 4px;
     }
 
     .nv-credit-name {
+        font-family: 'Space Grotesk', sans-serif;
         font-size: 14px;
-        font-weight: 700;
-        color: #FFFFFF !important;
+        font-weight: 600;
+        color: var(--nv-text) !important;
     }
 
     .nv-credit-product {
         font-size: 11px;
-        color: #777777 !important;
-        margin-top: 5px;
+        color: var(--nv-text-dim) !important;
+        margin-top: 4px;
     }
 
 
@@ -384,23 +391,25 @@ st.markdown(
        ================================================================ */
 
     .nv-login-wrap {
-        max-width: 620px;
-        margin: 55px auto 0 auto;
+        max-width: 480px;
+        margin: 60px auto 0 auto;
         padding: 10px;
     }
 
     .nv-login-title {
+        font-family: 'Space Grotesk', sans-serif;
         text-align: center;
-        font-size: 32px;
-        font-weight: 750;
+        font-size: 28px;
+        font-weight: 600;
         color: #FFFFFF !important;
-        margin-top: 20px;
+        margin-top: 18px;
     }
 
     .nv-login-subtitle {
         text-align: center;
-        color: #A7ADB7 !important;
-        margin-bottom: 25px;
+        color: var(--nv-text-dim) !important;
+        font-size: 13px;
+        margin-bottom: 24px;
     }
 
 
@@ -410,7 +419,7 @@ st.markdown(
 
     [data-testid="stCheckbox"] label,
     [data-testid="stRadio"] label {
-        color: #F5F7FA !important;
+        color: var(--nv-text) !important;
     }
 
 
@@ -419,12 +428,11 @@ st.markdown(
        ================================================================ */
 
     a {
-        color: #65A9FF !important;
+        color: var(--nv-accent) !important;
     }
 
     </style>
-    """,
-    unsafe_allow_html=True,
+    """
 )
 
 
@@ -494,10 +502,7 @@ if "user" not in st.session_state:
 
 if not st.session_state.user:
 
-    st.markdown(
-        '<div class="nv-login-wrap">',
-        unsafe_allow_html=True,
-    )
+    html('<div class="nv-login-wrap">')
 
     if LOGO_PATH.is_file():
         st.image(
@@ -505,21 +510,14 @@ if not st.session_state.user:
             use_container_width=True,
         )
     else:
-        st.markdown(
-            '<div style="text-align:center;"><h1>nVentures</h1></div>',
-            unsafe_allow_html=True,
-        )
+        html('<div style="text-align:center;"><h1>nVentures</h1></div>')
 
-    st.markdown(
-        '<div class="nv-login-title">Sourcing Intelligence</div>',
-        unsafe_allow_html=True,
-    )
+    html('<div class="nv-login-title">Sourcing Intelligence</div>')
 
-    st.markdown(
+    html(
         '<div class="nv-login-subtitle">'
         'Private sourcing platform for the nVentures team.'
-        '</div>',
-        unsafe_allow_html=True,
+        '</div>'
     )
 
     with st.form("login_form"):
@@ -557,24 +555,20 @@ if not st.session_state.user:
                 "Invalid email or password."
             )
 
-    st.markdown(
+    html(
         """
         <div style="
             text-align:center;
-            color:#888;
+            color: var(--nv-text-dim);
             font-size:12px;
             margin-top:25px;
         ">
             nVentures Sourcing Platform
         </div>
-        """,
-        unsafe_allow_html=True,
+        """
     )
 
-    st.markdown(
-        "</div>",
-        unsafe_allow_html=True,
-    )
+    html("</div>")
 
     st.stop()
 
@@ -590,9 +584,6 @@ user = st.session_state.user
 # SIDEBAR BRANDING
 # ============================================================================
 
-# Use the sidebar image directly so the full nVentures logo is visible.
-# Do not use st.logo() here: Streamlit renders that API as a small navigation
-# logo rather than the larger branded sidebar treatment we want.
 if LOGO_PATH.is_file():
     st.sidebar.image(
         str(LOGO_PATH),
@@ -653,7 +644,7 @@ page = st.sidebar.radio(
 # SIDEBAR CREDIT
 # ============================================================================
 
-st.sidebar.markdown(
+html(
     """
     <div class="nv-credit">
         <div class="nv-credit-small">
@@ -668,8 +659,7 @@ st.sidebar.markdown(
             nVentures Sourcing Platform
         </div>
     </div>
-    """,
-    unsafe_allow_html=True,
+    """
 )
 
 
@@ -679,21 +669,17 @@ st.sidebar.markdown(
 
 if page == "Dashboard":
 
-    st.markdown(
+    html(
         """
         <div class="nv-hero">
-
             <div class="nv-hero-title">
                 Sourcing Intelligence
             </div>
-
             <div class="nv-hero-subtitle">
                 AI-powered company discovery, research and investment sourcing.
             </div>
-
         </div>
-        """,
-        unsafe_allow_html=True,
+        """
     )
 
 
@@ -701,30 +687,24 @@ if page == "Dashboard":
     # GEOGRAPHIC FOCUS
     # ------------------------------------------------------------------------
 
-    st.markdown(
+    html(
         """
         <div class="nv-focus">
-
             <div class="nv-focus-title">
-                🌐 Geographic Focus — Hard Filter
+                Geographic focus — hard filter
             </div>
-
             <div class="nv-focus-main">
                 South Asia + Singapore
             </div>
-
             <div class="nv-focus-text">
                 Afghanistan, Bangladesh, Bhutan, India, Maldives,
                 Nepal, Pakistan, Singapore and Sri Lanka.
             </div>
-
             <div class="nv-focus-text">
                 Companies must be headquartered in an eligible country.
             </div>
-
         </div>
-        """,
-        unsafe_allow_html=True,
+        """
     )
 
 
@@ -803,8 +783,8 @@ if page == "Dashboard":
     )
 
     st.write(
-        f"**B2B:** required  •  "
-        f"**Stage:** pre-seed/seed  •  "
+        f"**B2B:** required &nbsp;&nbsp; "
+        f"**Stage:** pre-seed/seed &nbsp;&nbsp; "
         f"**Funding ceiling:** "
         f"${settings.max_total_funding:,.0f}"
     )
@@ -889,7 +869,7 @@ if page == "Dashboard":
     # ------------------------------------------------------------------------
 
     if st.button(
-        "🚀 Start sourcing",
+        "Start sourcing",
         type="primary",
         use_container_width=True,
     ):
