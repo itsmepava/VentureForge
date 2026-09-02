@@ -58,8 +58,18 @@ st.set_page_config(
 # helper (not st.markdown directly) for any HTML you add later.
 # ============================================================================
 
+def clean_html(content: str) -> str:
+    """Remove template indentation so Markdown cannot create code blocks."""
+    dedented = textwrap.dedent(content)
+    return "\n".join(line.lstrip() for line in dedented.splitlines())
+
+
 def html(content: str) -> None:
-    st.markdown(textwrap.dedent(content), unsafe_allow_html=True)
+    st.markdown(clean_html(content), unsafe_allow_html=True)
+
+
+def sidebar_html(content: str) -> None:
+    st.sidebar.markdown(clean_html(content), unsafe_allow_html=True)
 
 
 def logo_data_uri() -> str:
@@ -502,28 +512,30 @@ html(
     @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap');
 
     :root {
-        --nv-bg: #f5f7fb;
-        --nv-panel: #ffffff;
-        --nv-panel-quiet: #eef2f7;
-        --nv-line: #dfe5ee;
-        --nv-text: #182230;
-        --nv-text-dim: #657286;
-        --nv-accent: #2458d6;
-        --nv-accent-soft: #e8efff;
-        --nv-good: #13795b;
-        --nv-bad: #c84242;
+        --nv-bg: #08080b;
+        --nv-panel: #111217;
+        --nv-panel-quiet: #0c0d12;
+        --nv-line: #292c38;
+        --nv-text: #f5f6fa;
+        --nv-text-dim: #9a9eae;
+        --nv-accent: #8b5cf6;
+        --nv-accent-soft: #27184f;
+        --nv-good: #4ade80;
+        --nv-bad: #fb7185;
     }
 
     .stApp,
     [data-testid="stAppViewContainer"] {
-        background: var(--nv-bg);
+        background:
+            radial-gradient(circle at 82% 0%, rgba(74, 46, 150, 0.18), transparent 28rem),
+            var(--nv-bg);
         color: var(--nv-text);
         font-family: 'DM Sans', sans-serif;
     }
 
     .main .block-container {
-        max-width: 1440px;
-        padding: 2.25rem 3.25rem 4rem;
+        max-width: 1380px;
+        padding: 3rem 4rem 5rem;
     }
 
     [data-testid="stHeader"] {
@@ -550,13 +562,13 @@ html(
     }
 
     section[data-testid="stSidebar"] {
-        background: #ffffff;
+        background: #0a0a0e;
         border-right: 1px solid var(--nv-line);
     }
 
     section[data-testid="stSidebar"] > div {
-        background: #ffffff;
-        padding: 1.25rem 1rem;
+        background: #0a0a0e;
+        padding: 1.5rem 1rem;
     }
 
     section[data-testid="stSidebar"] [data-testid="stImage"] {
@@ -582,38 +594,42 @@ html(
 
     .nv-hero {
         background:
-            radial-gradient(circle at 85% 15%, rgba(78, 124, 235, 0.2), transparent 34%),
-            linear-gradient(135deg, #132a55 0%, #1f4fae 100%);
+            radial-gradient(circle, rgba(255, 255, 255, 0.09) 1px, transparent 1px),
+            radial-gradient(circle at 82% 10%, rgba(145, 92, 246, 0.65), transparent 34%),
+            radial-gradient(circle at 10% 110%, rgba(41, 109, 242, 0.55), transparent 40%),
+            linear-gradient(135deg, #0f1018 0%, #17122a 52%, #0c1631 100%);
+        background-size: 18px 18px, auto, auto, auto;
         border: 0;
-        border-radius: 18px;
-        padding: 2.15rem 2.35rem;
-        margin: 0 0 1.25rem;
-        box-shadow: 0 14px 32px rgba(31, 79, 174, 0.16);
+        border-radius: 24px;
+        min-height: 220px;
+        padding: 3.5rem 3.25rem;
+        margin: 0 0 1.5rem;
+        box-shadow: 0 20px 55px rgba(24, 18, 63, 0.3);
     }
 
     .nv-hero-title {
         font-family: 'Space Grotesk', sans-serif;
         color: #ffffff !important;
-        font-size: clamp(2rem, 4vw, 3rem);
+        font-size: clamp(2.4rem, 5vw, 4.1rem);
         font-weight: 700;
         line-height: 1.05;
         margin: 0;
     }
 
     .nv-hero-subtitle {
-        color: rgba(255, 255, 255, 0.78) !important;
-        font-size: 0.98rem;
+        color: rgba(255, 255, 255, 0.7) !important;
+        font-size: 1rem;
         line-height: 1.55;
         margin-top: 0.85rem;
         max-width: 680px;
     }
 
     .nv-focus {
-        background: var(--nv-panel);
+        background: rgba(17, 18, 23, 0.88);
         border: 1px solid var(--nv-line);
-        border-radius: 14px;
-        padding: 1.15rem 1.3rem;
-        margin: 0 0 1.7rem;
+        border-radius: 16px;
+        padding: 1.25rem 1.4rem;
+        margin: 0 0 2rem;
     }
 
     .nv-focus-title {
@@ -644,7 +660,7 @@ html(
         border: 1px solid var(--nv-line);
         border-radius: 14px;
         padding: 1rem 1.1rem;
-        box-shadow: 0 4px 12px rgba(31, 47, 71, 0.04);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18);
     }
 
     div[data-testid="stMetric"] label {
@@ -701,10 +717,10 @@ html(
 
     .stButton > button[kind="primary"],
     [data-testid="stFormSubmitButton"] button[kind="primary"] {
-        background: var(--nv-accent);
+        background: linear-gradient(135deg, #8b5cf6, #4f7cf5);
         border-color: var(--nv-accent);
         color: #ffffff;
-        box-shadow: 0 6px 14px rgba(36, 88, 214, 0.2);
+        box-shadow: 0 8px 22px rgba(111, 76, 220, 0.25);
     }
 
     div[data-testid="stAlert"] {
@@ -729,7 +745,7 @@ html(
     }
 
     .nv-credit {
-        background: #f7f9fc;
+        background: #111217;
         border: 1px solid var(--nv-line);
         border-radius: 12px;
         margin-top: 1.5rem;
@@ -760,7 +776,7 @@ html(
     }
 
     .nv-login-title {
-        color: var(--nv-text) !important;
+        color: #ffffff !important;
         font-family: 'Space Grotesk', sans-serif;
         font-size: 1.8rem;
         font-weight: 700;
@@ -782,7 +798,8 @@ html(
         }
         .nv-hero {
             border-radius: 14px;
-            padding: 1.5rem;
+            min-height: 180px;
+            padding: 2rem 1.5rem;
         }
         .nv-hero-title {
             font-size: 2rem;
@@ -988,7 +1005,7 @@ page = st.sidebar.radio("Workspace", nav_items)
 # SIDEBAR CREDIT
 # ============================================================================
 
-html(
+sidebar_html(
     """
     <div class="nv-credit">
         <div class="nv-credit-small">
