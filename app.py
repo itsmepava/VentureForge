@@ -1,4 +1,5 @@
 import textwrap
+import base64
 from dotenv import load_dotenv
 import os
 import json
@@ -8,7 +9,6 @@ from pathlib import Path
 import streamlit as st
 
 import database
-from auth import require_login
 from config import settings, ELIGIBLE_COUNTRIES
 from google_sheets import get_worksheets
 from sourcing_engine import run_sourcing
@@ -60,6 +60,59 @@ st.set_page_config(
 
 def html(content: str) -> None:
     st.markdown(textwrap.dedent(content), unsafe_allow_html=True)
+
+
+def logo_data_uri() -> str:
+    """Return the local logo as an embeddable image for custom HTML."""
+    if not LOGO_PATH.is_file():
+        return ""
+    encoded = base64.b64encode(LOGO_PATH.read_bytes()).decode("ascii")
+    return f"data:image/png;base64,{encoded}"
+
+
+def render_run_report(report: dict, run_id=None) -> None:
+    """Render a compact, reusable result view for a sourcing run."""
+    accepted = report.get("accepted", [])
+    rejected = report.get("rejected", [])
+    duplicates = report.get("duplicates", [])
+    errors = report.get("partner_errors", [])
+
+    title = "Latest sourcing run"
+    if run_id is not None:
+        title = f"Latest sourcing run · #{run_id}"
+    st.markdown(f"### {title}")
+
+    metric_cols = st.columns(4)
+    metric_cols[0].metric("Added", len(accepted))
+    metric_cols[1].metric("Duplicates", len(duplicates))
+    metric_cols[2].metric("Rejected", len(rejected))
+    metric_cols[3].metric("Partner errors", len(errors))
+
+    if accepted:
+        st.markdown("#### New companies")
+        accepted_details = report.get("accepted_details", accepted)
+        st.dataframe(
+            accepted_details,
+            use_container_width=True,
+            hide_index=True,
+        )
+    else:
+        st.info("No new companies were accepted during this run.")
+
+    if rejected:
+        with st.expander(f"Rejected · {len(rejected)}"):
+            st.write(rejected)
+
+    if duplicates:
+        with st.expander(f"Duplicates · {len(duplicates)}"):
+            st.write(duplicates)
+
+    if errors:
+        with st.expander(f"Partner/API errors · {len(errors)}"):
+            st.write(errors)
+
+    with st.expander("Full run report"):
+        st.json(report)
 
 
 # ============================================================================
@@ -437,6 +490,310 @@ html(
 
 
 # ============================================================================
+# MODERN UI OVERRIDES
+# ----------------------------------------------------------------------------
+# Keep custom HTML self-contained. Streamlit widgets are rendered in their
+# own blocks, so an HTML opening tag cannot be used as a wrapper around them.
+# ============================================================================
+
+html(
+    """
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap');
+
+    :root {
+        --nv-bg: #f5f7fb;
+        --nv-panel: #ffffff;
+        --nv-panel-quiet: #eef2f7;
+        --nv-line: #dfe5ee;
+        --nv-text: #182230;
+        --nv-text-dim: #657286;
+        --nv-accent: #2458d6;
+        --nv-accent-soft: #e8efff;
+        --nv-good: #13795b;
+        --nv-bad: #c84242;
+    }
+
+    .stApp,
+    [data-testid="stAppViewContainer"] {
+        background: var(--nv-bg);
+        color: var(--nv-text);
+        font-family: 'DM Sans', sans-serif;
+    }
+
+    .main .block-container {
+        max-width: 1440px;
+        padding: 2.25rem 3.25rem 4rem;
+    }
+
+    [data-testid="stHeader"] {
+        background: transparent;
+    }
+
+    h1, h2, h3, h4 {
+        font-family: 'Space Grotesk', sans-serif !important;
+        color: var(--nv-text) !important;
+        letter-spacing: -0.025em;
+    }
+
+    h1 { font-size: 2rem !important; }
+    h2 { font-size: 1.45rem !important; }
+    h3 { font-size: 1.05rem !important; margin-top: 1.5rem !important; }
+
+    p, .stMarkdown, [data-testid="stCaptionContainer"] {
+        color: var(--nv-text);
+    }
+
+    [data-testid="stCaptionContainer"] p,
+    .stCaption {
+        color: var(--nv-text-dim) !important;
+    }
+
+    section[data-testid="stSidebar"] {
+        background: #ffffff;
+        border-right: 1px solid var(--nv-line);
+    }
+
+    section[data-testid="stSidebar"] > div {
+        background: #ffffff;
+        padding: 1.25rem 1rem;
+    }
+
+    section[data-testid="stSidebar"] [data-testid="stImage"] {
+        padding: 0.25rem 0.35rem 0.85rem;
+    }
+
+    section[data-testid="stSidebar"] [data-testid="stImage"] img {
+        max-height: 42px;
+        width: auto;
+        object-fit: contain;
+        object-position: left center;
+    }
+
+    section[data-testid="stSidebar"] [data-testid="stRadio"] label {
+        border-radius: 10px;
+        padding: 0.55rem 0.7rem;
+        color: var(--nv-text) !important;
+    }
+
+    section[data-testid="stSidebar"] [data-testid="stRadio"] label:hover {
+        background: var(--nv-accent-soft);
+    }
+
+    .nv-hero {
+        background:
+            radial-gradient(circle at 85% 15%, rgba(78, 124, 235, 0.2), transparent 34%),
+            linear-gradient(135deg, #132a55 0%, #1f4fae 100%);
+        border: 0;
+        border-radius: 18px;
+        padding: 2.15rem 2.35rem;
+        margin: 0 0 1.25rem;
+        box-shadow: 0 14px 32px rgba(31, 79, 174, 0.16);
+    }
+
+    .nv-hero-title {
+        font-family: 'Space Grotesk', sans-serif;
+        color: #ffffff !important;
+        font-size: clamp(2rem, 4vw, 3rem);
+        font-weight: 700;
+        line-height: 1.05;
+        margin: 0;
+    }
+
+    .nv-hero-subtitle {
+        color: rgba(255, 255, 255, 0.78) !important;
+        font-size: 0.98rem;
+        line-height: 1.55;
+        margin-top: 0.85rem;
+        max-width: 680px;
+    }
+
+    .nv-focus {
+        background: var(--nv-panel);
+        border: 1px solid var(--nv-line);
+        border-radius: 14px;
+        padding: 1.15rem 1.3rem;
+        margin: 0 0 1.7rem;
+    }
+
+    .nv-focus-title {
+        color: var(--nv-text-dim);
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+    }
+
+    .nv-focus-main {
+        color: var(--nv-text) !important;
+        font-family: 'Space Grotesk', sans-serif;
+        font-size: 1.2rem;
+        font-weight: 600;
+        margin-top: 0.25rem;
+    }
+
+    .nv-focus-text {
+        color: var(--nv-text-dim) !important;
+        font-size: 0.82rem;
+        line-height: 1.5;
+        margin-top: 0.35rem;
+    }
+
+    div[data-testid="stMetric"] {
+        background: var(--nv-panel);
+        border: 1px solid var(--nv-line);
+        border-radius: 14px;
+        padding: 1rem 1.1rem;
+        box-shadow: 0 4px 12px rgba(31, 47, 71, 0.04);
+    }
+
+    div[data-testid="stMetric"] label {
+        color: var(--nv-text-dim) !important;
+        font-size: 0.78rem;
+    }
+
+    div[data-testid="stMetric"] [data-testid="stMetricValue"] {
+        color: var(--nv-text) !important;
+        font-family: 'Space Grotesk', sans-serif;
+    }
+
+    div[data-baseweb="input"],
+    div[data-baseweb="textarea"],
+    div[data-testid="stNumberInput"] > div,
+    div[data-baseweb="select"] > div {
+        background: var(--nv-panel);
+        border: 1px solid var(--nv-line) !important;
+        border-radius: 10px;
+    }
+
+    div[data-baseweb="input"]:focus-within,
+    div[data-baseweb="textarea"]:focus-within,
+    div[data-testid="stNumberInput"] > div:focus-within {
+        border-color: var(--nv-accent) !important;
+        box-shadow: 0 0 0 3px rgba(36, 88, 214, 0.12);
+    }
+
+    div[data-baseweb="input"] input,
+    div[data-baseweb="textarea"] textarea,
+    div[data-testid="stNumberInput"] input {
+        color: var(--nv-text) !important;
+    }
+
+    [data-testid="stForm"] {
+        background: var(--nv-panel);
+        border: 1px solid var(--nv-line);
+        border-radius: 14px;
+        padding: 1.15rem 1.25rem;
+    }
+
+    .stButton > button,
+    [data-testid="stFormSubmitButton"] button {
+        border-radius: 10px;
+        min-height: 2.7rem;
+        font-weight: 600;
+        transition: transform 120ms ease, box-shadow 120ms ease;
+    }
+
+    .stButton > button:hover,
+    [data-testid="stFormSubmitButton"] button:hover {
+        transform: translateY(-1px);
+    }
+
+    .stButton > button[kind="primary"],
+    [data-testid="stFormSubmitButton"] button[kind="primary"] {
+        background: var(--nv-accent);
+        border-color: var(--nv-accent);
+        color: #ffffff;
+        box-shadow: 0 6px 14px rgba(36, 88, 214, 0.2);
+    }
+
+    div[data-testid="stAlert"] {
+        border-radius: 10px;
+        border-width: 1px;
+    }
+
+    div[data-testid="stExpander"],
+    div[data-testid="stDataFrame"] {
+        background: var(--nv-panel);
+        border: 1px solid var(--nv-line);
+        border-radius: 14px;
+    }
+
+    div[data-testid="stDataFrame"] {
+        overflow: hidden;
+    }
+
+    hr {
+        border-color: var(--nv-line) !important;
+        margin: 1.6rem 0 !important;
+    }
+
+    .nv-credit {
+        background: #f7f9fc;
+        border: 1px solid var(--nv-line);
+        border-radius: 12px;
+        margin-top: 1.5rem;
+        padding: 0.85rem;
+        text-align: center;
+    }
+
+    .nv-credit-small,
+    .nv-credit-product {
+        color: var(--nv-text-dim) !important;
+        font-size: 0.7rem;
+    }
+
+    .nv-credit-name {
+        color: var(--nv-text) !important;
+        font-family: 'Space Grotesk', sans-serif;
+        font-size: 0.86rem;
+        font-weight: 600;
+        margin: 0.2rem 0;
+    }
+
+    .nv-login-logo {
+        display: block;
+        margin: 0 auto 1.1rem;
+        max-width: 220px;
+        max-height: 70px;
+        object-fit: contain;
+    }
+
+    .nv-login-title {
+        color: var(--nv-text) !important;
+        font-family: 'Space Grotesk', sans-serif;
+        font-size: 1.8rem;
+        font-weight: 700;
+        text-align: center;
+    }
+
+    .nv-login-subtitle {
+        color: var(--nv-text-dim) !important;
+        font-size: 0.85rem;
+        line-height: 1.5;
+        margin: 0.45rem auto 1.3rem;
+        max-width: 340px;
+        text-align: center;
+    }
+
+    @media (max-width: 768px) {
+        .main .block-container {
+            padding: 1.25rem 1rem 3rem;
+        }
+        .nv-hero {
+            border-radius: 14px;
+            padding: 1.5rem;
+        }
+        .nv-hero-title {
+            font-size: 2rem;
+        }
+    }
+    </style>
+    """
+)
+
+
+# ============================================================================
 # DATABASE
 # ============================================================================
 
@@ -495,6 +852,12 @@ if force_reset and admin_email and admin_password:
 if "user" not in st.session_state:
     st.session_state.user = None
 
+if "last_report" not in st.session_state:
+    st.session_state.last_report = None
+
+if "last_run_id" not in st.session_state:
+    st.session_state.last_run_id = None
+
 
 # ============================================================================
 # LOGIN
@@ -502,73 +865,57 @@ if "user" not in st.session_state:
 
 if not st.session_state.user:
 
-    html('<div class="nv-login-wrap">')
-
-    if LOGO_PATH.is_file():
-        st.image(
-            str(LOGO_PATH),
-            use_container_width=True,
-        )
-    else:
-        html('<div style="text-align:center;"><h1>nVentures</h1></div>')
-
-    html('<div class="nv-login-title">Sourcing Intelligence</div>')
-
-    html(
-        '<div class="nv-login-subtitle">'
-        'Private sourcing platform for the nVentures team.'
-        '</div>'
+    st.markdown(
+        '<div class="nv-login-wrap"></div>',
+        unsafe_allow_html=True,
     )
+    _, login_col, _ = st.columns([1, 1.05, 1])
 
-    with st.form("login_form"):
-
-        email = st.text_input(
-            "Email",
-            placeholder="you@company.com",
-        )
-
-        password = st.text_input(
-            "Password",
-            type="password",
-        )
-
-        submitted = st.form_submit_button(
-            "Sign in",
-            type="primary",
-            use_container_width=True,
-        )
-
-    if submitted:
-
-        email_clean = email.strip().lower()
-
-        user = database.authenticate(
-            email_clean,
-            password,
-        )
-
-        if user:
-            st.session_state.user = user
-            st.rerun()
+    with login_col:
+        logo_uri = logo_data_uri()
+        if logo_uri:
+            html(
+                f'<img class="nv-login-logo" src="{logo_uri}" alt="nVentures">'
+            )
         else:
-            st.error(
-                "Invalid email or password."
+            html('<div class="nv-login-title">nVentures</div>')
+
+        html('<div class="nv-login-title">Sourcing Intelligence</div>')
+        html(
+            '<div class="nv-login-subtitle">'
+            'Private sourcing platform for the nVentures team.'
+            '</div>'
+        )
+
+        with st.form("login_form"):
+            email = st.text_input(
+                "Email",
+                placeholder="you@company.com",
+            )
+            password = st.text_input(
+                "Password",
+                type="password",
+            )
+            submitted = st.form_submit_button(
+                "Sign in",
+                type="primary",
+                use_container_width=True,
             )
 
-    html(
-        """
-        <div style="
-            text-align:center;
-            color: var(--nv-text-dim);
-            font-size:12px;
-            margin-top:25px;
-        ">
-            nVentures Sourcing Platform
-        </div>
-        """
-    )
+        if submitted:
+            email_clean = email.strip().lower()
+            user = database.authenticate(email_clean, password)
+            if user:
+                st.session_state.user = user
+                st.rerun()
+            else:
+                st.error("Invalid email or password.")
 
-    html("</div>")
+        html(
+            '<div class="nv-login-subtitle">'
+            'nVentures Sourcing Platform'
+            '</div>'
+        )
 
     st.stop()
 
@@ -630,14 +977,11 @@ if st.sidebar.button(
 
 st.sidebar.divider()
 
-page = st.sidebar.radio(
-    "Navigate",
-    [
-        "Dashboard",
-        "Run History",
-        "Admin",
-    ],
-)
+nav_items = ["Dashboard", "Run History"]
+if user["role"] == "admin":
+    nav_items.append("Admin")
+
+page = st.sidebar.radio("Workspace", nav_items)
 
 
 # ============================================================================
@@ -1038,141 +1382,8 @@ if page == "Dashboard":
             )
 
 
-            # ---------------------------------------------------------------
-            # REPORT DATA
-            # ---------------------------------------------------------------
-
-            accepted = report.get(
-                "accepted",
-                [],
-            )
-
-            rejected = report.get(
-                "rejected",
-                [],
-            )
-
-            duplicates = report.get(
-                "duplicates",
-                [],
-            )
-
-            errors = report.get(
-                "partner_errors",
-                [],
-            )
-
-
-            # ---------------------------------------------------------------
-            # METRICS
-            # ---------------------------------------------------------------
-
-            a, b, c, d = st.columns(4)
-
-            a.metric(
-                "Added",
-                len(accepted),
-            )
-
-            b.metric(
-                "Duplicates",
-                len(duplicates),
-            )
-
-            c.metric(
-                "Rejected",
-                len(rejected),
-            )
-
-            d.metric(
-                "Partner errors",
-                len(errors),
-            )
-
-
-            # ---------------------------------------------------------------
-            # ACCEPTED COMPANIES
-            # ---------------------------------------------------------------
-
-            if accepted:
-
-                st.markdown(
-                    "### New companies"
-                )
-
-                accepted_details = report.get(
-                    "accepted_details",
-                    accepted,
-                )
-
-                st.dataframe(
-                    accepted_details,
-                    use_container_width=True,
-                )
-
-            else:
-
-                st.info(
-                    "No new companies were accepted during this run."
-                )
-
-
-            # ---------------------------------------------------------------
-            # REJECTED
-            # ---------------------------------------------------------------
-
-            if rejected:
-
-                with st.expander(
-                    f"Rejected ({len(rejected)})"
-                ):
-
-                    st.write(
-                        rejected
-                    )
-
-
-            # ---------------------------------------------------------------
-            # DUPLICATES
-            # ---------------------------------------------------------------
-
-            if duplicates:
-
-                with st.expander(
-                    f"Duplicates ({len(duplicates)})"
-                ):
-
-                    st.write(
-                        duplicates
-                    )
-
-
-            # ---------------------------------------------------------------
-            # ERRORS
-            # ---------------------------------------------------------------
-
-            if errors:
-
-                with st.expander(
-                    f"Partner/API errors ({len(errors)})"
-                ):
-
-                    st.write(
-                        errors
-                    )
-
-
-            # ---------------------------------------------------------------
-            # FULL REPORT
-            # ---------------------------------------------------------------
-
-            with st.expander(
-                "Full run report"
-            ):
-
-                st.json(
-                    report
-                )
+            st.session_state.last_report = report
+            st.session_state.last_run_id = run_id
 
 
         except Exception as exc:
@@ -1184,6 +1395,12 @@ if page == "Dashboard":
             st.exception(
                 exc
             )
+
+    if st.session_state.last_report:
+        render_run_report(
+            st.session_state.last_report,
+            st.session_state.last_run_id,
+        )
 
 
 # ============================================================================
