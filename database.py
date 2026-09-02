@@ -45,6 +45,19 @@ def init_db():
         )
     """)
 
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS company_reviews (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            run_id INTEGER NOT NULL,
+            company_key TEXT NOT NULL,
+            status TEXT NOT NULL DEFAULT 'Review',
+            notes TEXT DEFAULT '',
+            reviewer_email TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            UNIQUE(run_id, company_key)
+        )
+    """)
+
     conn.commit()
     conn.close()
 
@@ -290,3 +303,60 @@ def get_run(run_id):
         return None
 
     return dict(row)
+
+
+def get_review(run_id, company_key):
+    conn = connect()
+
+    row = conn.execute(
+        """
+        SELECT *
+        FROM company_reviews
+        WHERE run_id = ? AND company_key = ?
+        """,
+        (run_id, company_key),
+    ).fetchone()
+
+    conn.close()
+    return dict(row) if row else None
+
+
+def save_review(
+    run_id,
+    company_key,
+    status,
+    notes,
+    reviewer_email,
+):
+    conn = connect()
+    updated_at = datetime.now(timezone.utc).isoformat()
+
+    conn.execute(
+        """
+        INSERT INTO company_reviews (
+            run_id,
+            company_key,
+            status,
+            notes,
+            reviewer_email,
+            updated_at
+        )
+        VALUES (?, ?, ?, ?, ?, ?)
+        ON CONFLICT(run_id, company_key) DO UPDATE SET
+            status = excluded.status,
+            notes = excluded.notes,
+            reviewer_email = excluded.reviewer_email,
+            updated_at = excluded.updated_at
+        """,
+        (
+            run_id,
+            company_key,
+            status,
+            notes,
+            reviewer_email,
+            updated_at,
+        ),
+    )
+
+    conn.commit()
+    conn.close()
