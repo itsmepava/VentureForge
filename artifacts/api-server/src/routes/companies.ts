@@ -26,6 +26,7 @@ router.get("/companies", async (req, res, next) => {
       country: asArray(req.query.country),
       stage: asArray(req.query.stage),
       businessModel: asArray(req.query.businessModel),
+      sector: asArray(req.query.sector),
     });
     const filters = [eq(discoveredCompanies.organizationId, DEMO_ORGANIZATION_ID)];
     const companies = await db
@@ -56,7 +57,11 @@ router.get("/companies", async (req, res, next) => {
       const modelMatches =
         !params.businessModel?.length ||
         params.businessModel.includes(metadata.businessModel);
-      return searchMatches && regionMatches && countryMatches && stageMatches && modelMatches;
+      const sector = serializeCompany(company).regionalMetadata.sector;
+      const sectorMatches =
+        !params.sector?.length ||
+        params.sector.includes(sector);
+      return searchMatches && regionMatches && countryMatches && stageMatches && modelMatches && sectorMatches;
     });
     return res.json(ListCompaniesResponse.parse(regionFiltered.reverse().map(serializeCompany)));
   } catch (error) {

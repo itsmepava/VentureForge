@@ -12,4 +12,5 @@ export interface FilterParams {
   country: string[];
   stage: string[];
   businessModel: string[];
+  sector: string[];
 }

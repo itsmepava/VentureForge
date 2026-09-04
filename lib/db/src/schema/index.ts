@@ -34,6 +34,20 @@ export const portfolioStatusEnum = pgEnum("portfolio_status", [
   "Error",
 ]);
 
+export const providerConnections = pgTable("provider_connections", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  organizationId: uuid("organization_id")
+    .notNull()
+    .references(() => organizations.id),
+  provider: text("provider").notNull(),
+  label: text("label").notNull(),
+  encryptedValues: text("encrypted_values").notNull(),
+  status: text("status").notNull().default("active"),
+  lastVerifiedAt: timestamp("last_verified_at"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
 export const organizations = pgTable("organizations", {
   id: uuid("id").defaultRandom().primaryKey(),
   companyName: text("company_name").notNull(),
@@ -83,6 +97,7 @@ export const discoveredCompanies = pgTable("discovered_companies", {
     geographyRegion: string;
     specificCountry: string;
     businessModel: string;
+    sector: string;
     employeeCount: number;
   }>(),
   signalScore: integer("signal_score").notNull(),
@@ -107,6 +122,7 @@ export const savedSearches = pgTable("saved_searches", {
     country: string[];
     stage: string[];
     businessModel: string[];
+    sector: string[];
   }>(),
   isActive: boolean("is_active").notNull().default(true),
   createdAt: timestamp("created_at").notNull().defaultNow(),
@@ -128,11 +144,13 @@ export const insertUserSchema = createInsertSchema(users);
 export const insertCompanySchema = createInsertSchema(discoveredCompanies);
 export const insertSavedSearchSchema = createInsertSchema(savedSearches);
 export const insertPortfolioSourceSchema = createInsertSchema(portfolioSources);
+export const insertProviderConnectionSchema = createInsertSchema(providerConnections);
 
 export type Organization = typeof organizations.$inferSelect;
 export type User = typeof users.$inferSelect;
 export type DiscoveredCompany = typeof discoveredCompanies.$inferSelect;
 export type SavedSearch = typeof savedSearches.$inferSelect;
 export type PortfolioSource = typeof portfolioSources.$inferSelect;
+export type ProviderConnection = typeof providerConnections.$inferSelect;
 export const emptyJson = sql`'{}'::jsonb`;
 export { z };

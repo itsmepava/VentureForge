@@ -21,9 +21,16 @@ import type {
 
 import type {
   ActivityItem,
+  BillingPortalResponse,
+  BillingStatus,
   DashboardSummary,
   DiscoveredCompany,
   HealthStatus,
+  IntegrationConnection,
+  IntegrationDeliveryInput,
+  IntegrationDeliveryResponse,
+  IntegrationVaultInput,
+  IntegrationVerification,
   ListCompaniesParams,
   PortfolioSource,
   PortfolioSourceInput,
@@ -294,7 +301,7 @@ export const getListCompaniesUrl = (params?: ListCompaniesParams,) => {
   const normalizedParams = new URLSearchParams();
 
   Object.entries(params || {}).forEach(([key, value]) => {
-    const explodeParameters = ["region","country","stage","businessModel"];
+    const explodeParameters = ["region","country","stage","businessModel","sector"];
 
     if (Array.isArray(value) && explodeParameters.includes(key)) {
       value.forEach((v) => {
@@ -824,5 +831,587 @@ export const useCreatePortfolioSource = <TError = ErrorType<unknown>,
         TContext
       > => {
       return useMutation(getCreatePortfolioSourceMutationOptions(options));
+    }
+
+export const getListIntegrationsUrl = () => {
+
+
+
+
+  return `/api/integrations`
+}
+
+/**
+ * @summary List provider connection status
+ */
+export const listIntegrations = async ( options?: Parameters<typeof customFetch>[1]): Promise<IntegrationConnection[]> => {
+
+  return customFetch<IntegrationConnection[]>(getListIntegrationsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListIntegrationsQueryKey = () => {
+    return [
+    `/api/integrations`
+    ] as const;
+    }
+
+
+export const getListIntegrationsQueryOptions = <TData = Awaited<ReturnType<typeof listIntegrations>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listIntegrations>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListIntegrationsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listIntegrations>>> = ({ signal }) => listIntegrations({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listIntegrations>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListIntegrationsQueryResult = NonNullable<Awaited<ReturnType<typeof listIntegrations>>>
+export type ListIntegrationsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary List provider connection status
+ */
+
+export function useListIntegrations<TData = Awaited<ReturnType<typeof listIntegrations>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listIntegrations>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListIntegrationsQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getSaveIntegrationVaultUrl = (provider: 'github' | 'stripe' | 'notion' | 'google_sheets' | 'slack',) => {
+
+
+
+
+  return `/api/integrations/${provider}/vault`
+}
+
+/**
+ * @summary Save encrypted provider values
+ */
+export const saveIntegrationVault = async (provider: 'github' | 'stripe' | 'notion' | 'google_sheets' | 'slack',
+    integrationVaultInput: IntegrationVaultInput, options?: Parameters<typeof customFetch>[1]): Promise<IntegrationConnection> => {
+
+  return customFetch<IntegrationConnection>(getSaveIntegrationVaultUrl(provider),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(integrationVaultInput)
+  }
+);}
+
+
+
+
+
+export const getSaveIntegrationVaultMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof saveIntegrationVault>>, TError,{provider: 'github' | 'stripe' | 'notion' | 'google_sheets' | 'slack';data: BodyType<IntegrationVaultInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof saveIntegrationVault>>, TError,{provider: 'github' | 'stripe' | 'notion' | 'google_sheets' | 'slack';data: BodyType<IntegrationVaultInput>}, TContext> => {
+
+const mutationKey = ['saveIntegrationVault'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof saveIntegrationVault>>, {provider: 'github' | 'stripe' | 'notion' | 'google_sheets' | 'slack';data: BodyType<IntegrationVaultInput>}> = (props) => {
+          const {provider,data} = props ?? {};
+
+          return  saveIntegrationVault(provider,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SaveIntegrationVaultMutationResult = NonNullable<Awaited<ReturnType<typeof saveIntegrationVault>>>
+    export type SaveIntegrationVaultMutationBody = BodyType<IntegrationVaultInput>
+    export type SaveIntegrationVaultMutationError = ErrorType<void>
+
+    /**
+ * @summary Save encrypted provider values
+ */
+export const useSaveIntegrationVault = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof saveIntegrationVault>>, TError,{provider: 'github' | 'stripe' | 'notion' | 'google_sheets' | 'slack';data: BodyType<IntegrationVaultInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof saveIntegrationVault>>,
+        TError,
+        {provider: 'github' | 'stripe' | 'notion' | 'google_sheets' | 'slack';data: BodyType<IntegrationVaultInput>},
+        TContext
+      > => {
+      return useMutation(getSaveIntegrationVaultMutationOptions(options));
+    }
+
+export const getDisconnectIntegrationUrl = (provider: 'github' | 'stripe' | 'notion' | 'google_sheets' | 'slack',) => {
+
+
+
+
+  return `/api/integrations/${provider}`
+}
+
+/**
+ * @summary Remove organization provider values
+ */
+export const disconnectIntegration = async (provider: 'github' | 'stripe' | 'notion' | 'google_sheets' | 'slack', options?: Parameters<typeof customFetch>[1]): Promise<void> => {
+
+  return customFetch<void>(getDisconnectIntegrationUrl(provider),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getDisconnectIntegrationMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof disconnectIntegration>>, TError,{provider: 'github' | 'stripe' | 'notion' | 'google_sheets' | 'slack'}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof disconnectIntegration>>, TError,{provider: 'github' | 'stripe' | 'notion' | 'google_sheets' | 'slack'}, TContext> => {
+
+const mutationKey = ['disconnectIntegration'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof disconnectIntegration>>, {provider: 'github' | 'stripe' | 'notion' | 'google_sheets' | 'slack'}> = (props) => {
+          const {provider} = props ?? {};
+
+          return  disconnectIntegration(provider,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DisconnectIntegrationMutationResult = NonNullable<Awaited<ReturnType<typeof disconnectIntegration>>>
+
+    export type DisconnectIntegrationMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Remove organization provider values
+ */
+export const useDisconnectIntegration = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof disconnectIntegration>>, TError,{provider: 'github' | 'stripe' | 'notion' | 'google_sheets' | 'slack'}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof disconnectIntegration>>,
+        TError,
+        {provider: 'github' | 'stripe' | 'notion' | 'google_sheets' | 'slack'},
+        TContext
+      > => {
+      return useMutation(getDisconnectIntegrationMutationOptions(options));
+    }
+
+export const getVerifyIntegrationUrl = (provider: 'github' | 'stripe' | 'notion' | 'google_sheets' | 'slack',) => {
+
+
+
+
+  return `/api/integrations/${provider}/verify`
+}
+
+/**
+ * @summary Verify an encrypted provider connection
+ */
+export const verifyIntegration = async (provider: 'github' | 'stripe' | 'notion' | 'google_sheets' | 'slack', options?: Parameters<typeof customFetch>[1]): Promise<IntegrationVerification> => {
+
+  return customFetch<IntegrationVerification>(getVerifyIntegrationUrl(provider),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+
+export const getVerifyIntegrationMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof verifyIntegration>>, TError,{provider: 'github' | 'stripe' | 'notion' | 'google_sheets' | 'slack'}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof verifyIntegration>>, TError,{provider: 'github' | 'stripe' | 'notion' | 'google_sheets' | 'slack'}, TContext> => {
+
+const mutationKey = ['verifyIntegration'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof verifyIntegration>>, {provider: 'github' | 'stripe' | 'notion' | 'google_sheets' | 'slack'}> = (props) => {
+          const {provider} = props ?? {};
+
+          return  verifyIntegration(provider,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type VerifyIntegrationMutationResult = NonNullable<Awaited<ReturnType<typeof verifyIntegration>>>
+
+    export type VerifyIntegrationMutationError = ErrorType<void>
+
+    /**
+ * @summary Verify an encrypted provider connection
+ */
+export const useVerifyIntegration = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof verifyIntegration>>, TError,{provider: 'github' | 'stripe' | 'notion' | 'google_sheets' | 'slack'}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof verifyIntegration>>,
+        TError,
+        {provider: 'github' | 'stripe' | 'notion' | 'google_sheets' | 'slack'},
+        TContext
+      > => {
+      return useMutation(getVerifyIntegrationMutationOptions(options));
+    }
+
+export const getTestIntegrationDeliveryUrl = (provider: 'github' | 'stripe' | 'notion' | 'google_sheets' | 'slack',) => {
+
+
+
+
+  return `/api/integrations/${provider}/test-delivery`
+}
+
+/**
+ * @summary Send a test delivery to a configured destination
+ */
+export const testIntegrationDelivery = async (provider: 'github' | 'stripe' | 'notion' | 'google_sheets' | 'slack',
+    integrationDeliveryInput: IntegrationDeliveryInput, options?: Parameters<typeof customFetch>[1]): Promise<IntegrationDeliveryResponse> => {
+
+  return customFetch<IntegrationDeliveryResponse>(getTestIntegrationDeliveryUrl(provider),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(integrationDeliveryInput)
+  }
+);}
+
+
+
+
+
+export const getTestIntegrationDeliveryMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof testIntegrationDelivery>>, TError,{provider: 'github' | 'stripe' | 'notion' | 'google_sheets' | 'slack';data: BodyType<IntegrationDeliveryInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof testIntegrationDelivery>>, TError,{provider: 'github' | 'stripe' | 'notion' | 'google_sheets' | 'slack';data: BodyType<IntegrationDeliveryInput>}, TContext> => {
+
+const mutationKey = ['testIntegrationDelivery'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof testIntegrationDelivery>>, {provider: 'github' | 'stripe' | 'notion' | 'google_sheets' | 'slack';data: BodyType<IntegrationDeliveryInput>}> = (props) => {
+          const {provider,data} = props ?? {};
+
+          return  testIntegrationDelivery(provider,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type TestIntegrationDeliveryMutationResult = NonNullable<Awaited<ReturnType<typeof testIntegrationDelivery>>>
+    export type TestIntegrationDeliveryMutationBody = BodyType<IntegrationDeliveryInput>
+    export type TestIntegrationDeliveryMutationError = ErrorType<void>
+
+    /**
+ * @summary Send a test delivery to a configured destination
+ */
+export const useTestIntegrationDelivery = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof testIntegrationDelivery>>, TError,{provider: 'github' | 'stripe' | 'notion' | 'google_sheets' | 'slack';data: BodyType<IntegrationDeliveryInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof testIntegrationDelivery>>,
+        TError,
+        {provider: 'github' | 'stripe' | 'notion' | 'google_sheets' | 'slack';data: BodyType<IntegrationDeliveryInput>},
+        TContext
+      > => {
+      return useMutation(getTestIntegrationDeliveryMutationOptions(options));
+    }
+
+export const getGetBillingStatusUrl = () => {
+
+
+
+
+  return `/api/billing/status`
+}
+
+/**
+ * @summary Get organization billing status
+ */
+export const getBillingStatus = async ( options?: Parameters<typeof customFetch>[1]): Promise<BillingStatus> => {
+
+  return customFetch<BillingStatus>(getGetBillingStatusUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetBillingStatusQueryKey = () => {
+    return [
+    `/api/billing/status`
+    ] as const;
+    }
+
+
+export const getGetBillingStatusQueryOptions = <TData = Awaited<ReturnType<typeof getBillingStatus>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getBillingStatus>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetBillingStatusQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getBillingStatus>>> = ({ signal }) => getBillingStatus({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getBillingStatus>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetBillingStatusQueryResult = NonNullable<Awaited<ReturnType<typeof getBillingStatus>>>
+export type GetBillingStatusQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Get organization billing status
+ */
+
+export function useGetBillingStatus<TData = Awaited<ReturnType<typeof getBillingStatus>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getBillingStatus>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetBillingStatusQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getCreateBillingPortalUrl = () => {
+
+
+
+
+  return `/api/billing/portal`
+}
+
+/**
+ * @summary Create a Stripe customer portal session
+ */
+export const createBillingPortal = async ( options?: Parameters<typeof customFetch>[1]): Promise<BillingPortalResponse> => {
+
+  return customFetch<BillingPortalResponse>(getCreateBillingPortalUrl(),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+
+export const getCreateBillingPortalMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createBillingPortal>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createBillingPortal>>, TError,void, TContext> => {
+
+const mutationKey = ['createBillingPortal'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createBillingPortal>>, void> = () => {
+
+
+          return  createBillingPortal(requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateBillingPortalMutationResult = NonNullable<Awaited<ReturnType<typeof createBillingPortal>>>
+
+    export type CreateBillingPortalMutationError = ErrorType<void>
+
+    /**
+ * @summary Create a Stripe customer portal session
+ */
+export const useCreateBillingPortal = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createBillingPortal>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createBillingPortal>>,
+        TError,
+        void,
+        TContext
+      > => {
+      return useMutation(getCreateBillingPortalMutationOptions(options));
+    }
+
+export const getStripeWebhookUrl = () => {
+
+
+
+
+  return `/api/stripe/webhook`
+}
+
+/**
+ * @summary Receive a signed Stripe webhook
+ */
+export const stripeWebhook = async ( options?: Parameters<typeof customFetch>[1]): Promise<void> => {
+
+  return customFetch<void>(getStripeWebhookUrl(),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+
+export const getStripeWebhookMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof stripeWebhook>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof stripeWebhook>>, TError,void, TContext> => {
+
+const mutationKey = ['stripeWebhook'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof stripeWebhook>>, void> = () => {
+
+
+          return  stripeWebhook(requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type StripeWebhookMutationResult = NonNullable<Awaited<ReturnType<typeof stripeWebhook>>>
+
+    export type StripeWebhookMutationError = ErrorType<void>
+
+    /**
+ * @summary Receive a signed Stripe webhook
+ */
+export const useStripeWebhook = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof stripeWebhook>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof stripeWebhook>>,
+        TError,
+        void,
+        TContext
+      > => {
+      return useMutation(getStripeWebhookMutationOptions(options));
     }
 

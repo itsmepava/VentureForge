@@ -18,6 +18,10 @@ tags:
     description: Saved sourcing filters
   - name: portfolio
     description: Portfolio source ingestion
+  - name: integrations
+    description: Protected provider connections and delivery destinations
+  - name: billing
+    description: Stripe subscription status and billing portal
 paths:
   /healthz:
     get:
@@ -69,6 +73,7 @@ paths:
         - $ref: "#/components/parameters/CountryQuery"
         - $ref: "#/components/parameters/StageQuery"
         - $ref: "#/components/parameters/BusinessModelQuery"
+        - $ref: "#/components/parameters/SectorQuery"
       responses:
         "200":
           description: Filtered company records
@@ -168,6 +173,130 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/PortfolioSource"
+  /integrations:
+    get:
+      operationId: listIntegrations
+      tags: [integrations]
+      summary: List provider connection status
+      responses:
+        "200":
+          description: Provider connection status
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/IntegrationConnection"
+  /integrations/{provider}/vault:
+    post:
+      operationId: saveIntegrationVault
+      tags: [integrations]
+      summary: Save encrypted provider values
+      parameters:
+        - $ref: "#/components/parameters/Provider"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/IntegrationVaultInput"
+      responses:
+        "201":
+          description: Saved provider connection
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IntegrationConnection"
+        "400":
+          description: Invalid provider values
+        "503":
+          description: Encryption is not configured
+  /integrations/{provider}:
+    delete:
+      operationId: disconnectIntegration
+      tags: [integrations]
+      summary: Remove organization provider values
+      parameters:
+        - $ref: "#/components/parameters/Provider"
+      responses:
+        "204":
+          description: Disconnected
+  /integrations/{provider}/verify:
+    post:
+      operationId: verifyIntegration
+      tags: [integrations]
+      summary: Verify an encrypted provider connection
+      parameters:
+        - $ref: "#/components/parameters/Provider"
+      responses:
+        "200":
+          description: Verification result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IntegrationVerification"
+        "404":
+          description: Provider is not configured
+  /integrations/{provider}/test-delivery:
+    post:
+      operationId: testIntegrationDelivery
+      tags: [integrations]
+      summary: Send a test delivery to a configured destination
+      parameters:
+        - $ref: "#/components/parameters/Provider"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/IntegrationDeliveryInput"
+      responses:
+        "200":
+          description: Delivery result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IntegrationDeliveryResponse"
+        "404":
+          description: Provider is not configured
+  /billing/status:
+    get:
+      operationId: getBillingStatus
+      tags: [billing]
+      summary: Get organization billing status
+      responses:
+        "200":
+          description: Billing status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BillingStatus"
+  /billing/portal:
+    post:
+      operationId: createBillingPortal
+      tags: [billing]
+      summary: Create a Stripe customer portal session
+      responses:
+        "200":
+          description: Billing portal URL
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BillingPortalResponse"
+        "409":
+          description: Organization has no Stripe customer
+        "503":
+          description: Stripe is not connected
+  /stripe/webhook:
+    post:
+      operationId: stripeWebhook
+      tags: [billing]
+      summary: Receive a signed Stripe webhook
+      responses:
+        "200":
+          description: Webhook accepted
+        "400":
+          description: Invalid signature or payload
 components:
   parameters:
     CompanyId:
@@ -182,6 +311,12 @@ components:
       required: true
       schema:
         type: string
+    Provider:
+      name: provider
+      in: path
+      required: true
+      schema:
+        $ref: "#/components/schemas/ProviderName"
     SearchQuery:
       name: search
       in: query
@@ -220,6 +355,16 @@ components:
       explode: true
     BusinessModelQuery:
       name: businessModel
+      in: query
+      required: false
+      schema:
+        type: array
+        items:
+          type: string
+      style: form
+      explode: true
+    SectorQuery:
+      name: sector
       in: query
       required: false
       schema:
@@ -332,9 +477,11 @@ components:
           type: string
         businessModel:
           type: string
+        sector:
+          type: string
         employeeCount:
           type: number
-      required: [geographyRegion, specificCountry, businessModel, employeeCount]
+      required: [geographyRegion, specificCountry, businessModel, sector, employeeCount]
     DiscoveredCompany:
       type: object
       properties:
@@ -439,7 +586,11 @@ components:
           type: array
           items:
             type: string
-      required: [search, region, country, stage, businessModel]
+        sector:
+          type: array
+          items:
+            type: string
+      required: [search, region, country, stage, businessModel, sector]
     PortfolioSource:
       type: object
       properties:
@@ -462,3 +613,86 @@ components:
           type: string
           minLength: 1
       required: [urlLink]
+    ProviderName:
+      type: string
+      enum: [github, stripe, notion, google_sheets, slack]
+    IntegrationConnection:
+      type: object
+      properties:
+        provider:
+          $ref: "#/components/schemas/ProviderName"
+        displayName:
+          type: string
+        category:
+          type: string
+          enum: [activity, billing, delivery]
+        status:
+          type: string
+          enum: [connected, vault_configured, not_connected, needs_reauthorization]
+        detail:
+          type: string
+        lastVerifiedAt:
+          type: ["string", "null"]
+      required: [provider, displayName, category, status, detail, lastVerifiedAt]
+    IntegrationVaultInput:
+      type: object
+      properties:
+        label:
+          type: string
+          minLength: 1
+        values:
+          type: object
+          additionalProperties:
+            type: string
+      required: [label, values]
+    IntegrationVerification:
+      type: object
+      properties:
+        provider:
+          $ref: "#/components/schemas/ProviderName"
+        verified:
+          type: boolean
+        message:
+          type: string
+        lastVerifiedAt:
+          type: ["string", "null"]
+      required: [provider, verified, message, lastVerifiedAt]
+    IntegrationDeliveryInput:
+      type: object
+      properties:
+        message:
+          type: string
+          minLength: 1
+      required: [message]
+    IntegrationDeliveryResponse:
+      type: object
+      properties:
+        provider:
+          $ref: "#/components/schemas/ProviderName"
+        delivered:
+          type: boolean
+        message:
+          type: string
+      required: [provider, delivered, message]
+    BillingStatus:
+      type: object
+      properties:
+        tier:
+          type: string
+          enum: [Free, Pro, Enterprise]
+        subscriptionStatus:
+          type: string
+          enum: [active, past_due, canceled]
+        stripeConnected:
+          type: boolean
+        hasCustomer:
+          type: boolean
+        hasSubscription:
+          type: boolean
+      required: [tier, subscriptionStatus, stripeConnected, hasCustomer, hasSubscription]
+    BillingPortalResponse:
+      type: object
+      properties:
+        url:
+          type: string
+      required: [url]

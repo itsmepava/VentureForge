@@ -8,7 +8,7 @@ import {
 } from "@workspace/api-zod";
 import { db, discoveredCompanies, savedSearches } from "@workspace/db";
 import { DEMO_ORGANIZATION_ID, DEMO_USER_ID, ensureDemoData } from "../lib/demo-data";
-import { serializeSavedSearch } from "../lib/serializers";
+import { serializeCompany, serializeSavedSearch } from "../lib/serializers";
 
 const router: IRouter = Router();
 
@@ -33,13 +33,15 @@ router.get("/saved-searches", async (_req, res, next) => {
     ]);
     const data = searches.map((search) => {
       const filters = search.filterParams;
+      const sectors = filters.sector ?? [];
       const matchCount = companies.filter((company) => {
         const metadata = company.regionalMetadata;
         return (
           (!filters.region.length || filters.region.includes(metadata.geographyRegion)) &&
           (!filters.country.length || filters.country.includes(metadata.specificCountry)) &&
           (!filters.stage.length || filters.stage.includes(company.lastFundingRound)) &&
-          (!filters.businessModel.length || filters.businessModel.includes(metadata.businessModel))
+          (!filters.businessModel.length || filters.businessModel.includes(metadata.businessModel)) &&
+          (!sectors.length || sectors.includes(serializeCompany(company).regionalMetadata.sector))
         );
       }).length;
       return serializeSavedSearch(search, matchCount);

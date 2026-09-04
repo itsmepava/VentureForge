@@ -61,7 +61,8 @@ export const ListCompaniesQueryParams = zod.object({
   "region": zod.array(zod.coerce.string()).optional(),
   "country": zod.array(zod.coerce.string()).optional(),
   "stage": zod.array(zod.coerce.string()).optional(),
-  "businessModel": zod.array(zod.coerce.string()).optional()
+  "businessModel": zod.array(zod.coerce.string()).optional(),
+  "sector": zod.array(zod.coerce.string()).optional()
 })
 
 export const ListCompaniesResponseItem = zod.object({
@@ -87,6 +88,7 @@ export const ListCompaniesResponseItem = zod.object({
   "geographyRegion": zod.string(),
   "specificCountry": zod.string(),
   "businessModel": zod.string(),
+  "sector": zod.string(),
   "employeeCount": zod.number()
 }),
   "signalScore": zod.number(),
@@ -128,6 +130,7 @@ export const GetCompanyResponse = zod.object({
   "geographyRegion": zod.string(),
   "specificCountry": zod.string(),
   "businessModel": zod.string(),
+  "sector": zod.string(),
   "employeeCount": zod.number()
 }),
   "signalScore": zod.number(),
@@ -149,7 +152,8 @@ export const ListSavedSearchesResponseItem = zod.object({
   "region": zod.array(zod.string()),
   "country": zod.array(zod.string()),
   "stage": zod.array(zod.string()),
-  "businessModel": zod.array(zod.string())
+  "businessModel": zod.array(zod.string()),
+  "sector": zod.array(zod.string())
 }),
   "createdAt": zod.string(),
   "matchCount": zod.number(),
@@ -171,7 +175,8 @@ export const CreateSavedSearchBody = zod.object({
   "region": zod.array(zod.string()),
   "country": zod.array(zod.string()),
   "stage": zod.array(zod.string()),
-  "businessModel": zod.array(zod.string())
+  "businessModel": zod.array(zod.string()),
+  "sector": zod.array(zod.string())
 })
 })
 
@@ -183,7 +188,8 @@ export const CreateSavedSearchResponse = zod.object({
   "region": zod.array(zod.string()),
   "country": zod.array(zod.string()),
   "stage": zod.array(zod.string()),
-  "businessModel": zod.array(zod.string())
+  "businessModel": zod.array(zod.string()),
+  "sector": zod.array(zod.string())
 }),
   "createdAt": zod.string(),
   "matchCount": zod.number(),
@@ -231,5 +237,116 @@ export const CreatePortfolioSourceResponse = zod.object({
   "companyCount": zod.number(),
   "createdAt": zod.string()
 })
+
+
+/**
+ * @summary List provider connection status
+ */
+export const ListIntegrationsResponseItem = zod.object({
+  "provider": zod.enum(['github', 'stripe', 'notion', 'google_sheets', 'slack']),
+  "displayName": zod.string(),
+  "category": zod.enum(['activity', 'billing', 'delivery']),
+  "status": zod.enum(['connected', 'vault_configured', 'not_connected', 'needs_reauthorization']),
+  "detail": zod.string(),
+  "lastVerifiedAt": zod.string().nullable()
+})
+export const ListIntegrationsResponse = zod.array(ListIntegrationsResponseItem)
+
+
+/**
+ * @summary Save encrypted provider values
+ */
+export const SaveIntegrationVaultParams = zod.object({
+  "provider": zod.enum(['github', 'stripe', 'notion', 'google_sheets', 'slack'])
+})
+
+
+
+
+export const SaveIntegrationVaultBody = zod.object({
+  "label": zod.string().min(1),
+  "values": zod.record(zod.string(), zod.string())
+})
+
+export const SaveIntegrationVaultResponse = zod.object({
+  "provider": zod.enum(['github', 'stripe', 'notion', 'google_sheets', 'slack']),
+  "displayName": zod.string(),
+  "category": zod.enum(['activity', 'billing', 'delivery']),
+  "status": zod.enum(['connected', 'vault_configured', 'not_connected', 'needs_reauthorization']),
+  "detail": zod.string(),
+  "lastVerifiedAt": zod.string().nullable()
+})
+
+
+/**
+ * @summary Remove organization provider values
+ */
+export const DisconnectIntegrationParams = zod.object({
+  "provider": zod.enum(['github', 'stripe', 'notion', 'google_sheets', 'slack'])
+})
+
+export const DisconnectIntegrationResponse = zod.void()
+
+
+/**
+ * @summary Verify an encrypted provider connection
+ */
+export const VerifyIntegrationParams = zod.object({
+  "provider": zod.enum(['github', 'stripe', 'notion', 'google_sheets', 'slack'])
+})
+
+export const VerifyIntegrationResponse = zod.object({
+  "provider": zod.enum(['github', 'stripe', 'notion', 'google_sheets', 'slack']),
+  "verified": zod.boolean(),
+  "message": zod.string(),
+  "lastVerifiedAt": zod.string().nullable()
+})
+
+
+/**
+ * @summary Send a test delivery to a configured destination
+ */
+export const TestIntegrationDeliveryParams = zod.object({
+  "provider": zod.enum(['github', 'stripe', 'notion', 'google_sheets', 'slack'])
+})
+
+
+
+
+export const TestIntegrationDeliveryBody = zod.object({
+  "message": zod.string().min(1)
+})
+
+export const TestIntegrationDeliveryResponse = zod.object({
+  "provider": zod.enum(['github', 'stripe', 'notion', 'google_sheets', 'slack']),
+  "delivered": zod.boolean(),
+  "message": zod.string()
+})
+
+
+/**
+ * @summary Get organization billing status
+ */
+export const GetBillingStatusResponse = zod.object({
+  "tier": zod.enum(['Free', 'Pro', 'Enterprise']),
+  "subscriptionStatus": zod.enum(['active', 'past_due', 'canceled']),
+  "stripeConnected": zod.boolean(),
+  "hasCustomer": zod.boolean(),
+  "hasSubscription": zod.boolean()
+})
+
+
+/**
+ * @summary Create a Stripe customer portal session
+ */
+export const CreateBillingPortalResponse = zod.object({
+  "url": zod.string()
+})
+
+
+/**
+ * @summary Receive a signed Stripe webhook
+ */
+export const StripeWebhookResponse = zod.unknown()
 
 

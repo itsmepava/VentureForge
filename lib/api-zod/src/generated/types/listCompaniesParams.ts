@@ -9,6 +9,7 @@ import type { BusinessModelQueryParameter } from './businessModelQueryParameter'
 import type { CountryQueryParameter } from './countryQueryParameter';
 import type { RegionQueryParameter } from './regionQueryParameter';
 import type { SearchQueryParameter } from './searchQueryParameter';
+import type { SectorQueryParameter } from './sectorQueryParameter';
 import type { StageQueryParameter } from './stageQueryParameter';
 
 export type ListCompaniesParams = {
@@ -17,4 +18,5 @@ region?: RegionQueryParameter;
 country?: CountryQueryParameter;
 stage?: StageQueryParameter;
 businessModel?: BusinessModelQueryParameter;
+sector?: SectorQueryParameter;
 };

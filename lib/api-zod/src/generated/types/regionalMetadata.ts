@@ -10,5 +10,6 @@ export interface RegionalMetadata {
   geographyRegion: string;
   specificCountry: string;
   businessModel: string;
+  sector: string;
   employeeCount: number;
 }

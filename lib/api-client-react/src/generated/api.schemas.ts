@@ -81,6 +81,7 @@ export interface RegionalMetadata {
   geographyRegion: string;
   specificCountry: string;
   businessModel: string;
+  sector: string;
   employeeCount: number;
 }
 
@@ -127,6 +128,7 @@ export interface FilterParams {
   country: string[];
   stage: string[];
   businessModel: string[];
+  sector: string[];
 }
 
 export interface SavedSearch {
@@ -166,6 +168,103 @@ export interface PortfolioSourceInput {
   urlLink: string;
 }
 
+export type ProviderName = typeof ProviderName[keyof typeof ProviderName];
+
+
+export const ProviderName = {
+  github: 'github',
+  stripe: 'stripe',
+  notion: 'notion',
+  google_sheets: 'google_sheets',
+  slack: 'slack',
+} as const;
+
+export type IntegrationConnectionCategory = typeof IntegrationConnectionCategory[keyof typeof IntegrationConnectionCategory];
+
+
+export const IntegrationConnectionCategory = {
+  activity: 'activity',
+  billing: 'billing',
+  delivery: 'delivery',
+} as const;
+
+export type IntegrationConnectionStatus = typeof IntegrationConnectionStatus[keyof typeof IntegrationConnectionStatus];
+
+
+export const IntegrationConnectionStatus = {
+  connected: 'connected',
+  vault_configured: 'vault_configured',
+  not_connected: 'not_connected',
+  needs_reauthorization: 'needs_reauthorization',
+} as const;
+
+export interface IntegrationConnection {
+  provider: ProviderName;
+  displayName: string;
+  category: IntegrationConnectionCategory;
+  status: IntegrationConnectionStatus;
+  detail: string;
+  /** @nullable */
+  lastVerifiedAt: string | null;
+}
+
+export type IntegrationVaultInputValues = {[key: string]: string};
+
+export interface IntegrationVaultInput {
+  /** @minLength 1 */
+  label: string;
+  values: IntegrationVaultInputValues;
+}
+
+export interface IntegrationVerification {
+  provider: ProviderName;
+  verified: boolean;
+  message: string;
+  /** @nullable */
+  lastVerifiedAt: string | null;
+}
+
+export interface IntegrationDeliveryInput {
+  /** @minLength 1 */
+  message: string;
+}
+
+export interface IntegrationDeliveryResponse {
+  provider: ProviderName;
+  delivered: boolean;
+  message: string;
+}
+
+export type BillingStatusTier = typeof BillingStatusTier[keyof typeof BillingStatusTier];
+
+
+export const BillingStatusTier = {
+  Free: 'Free',
+  Pro: 'Pro',
+  Enterprise: 'Enterprise',
+} as const;
+
+export type BillingStatusSubscriptionStatus = typeof BillingStatusSubscriptionStatus[keyof typeof BillingStatusSubscriptionStatus];
+
+
+export const BillingStatusSubscriptionStatus = {
+  active: 'active',
+  past_due: 'past_due',
+  canceled: 'canceled',
+} as const;
+
+export interface BillingStatus {
+  tier: BillingStatusTier;
+  subscriptionStatus: BillingStatusSubscriptionStatus;
+  stripeConnected: boolean;
+  hasCustomer: boolean;
+  hasSubscription: boolean;
+}
+
+export interface BillingPortalResponse {
+  url: string;
+}
+
 export type SearchQueryParameter = string;
 
 export type RegionQueryParameter = string[];
@@ -176,11 +275,14 @@ export type StageQueryParameter = string[];
 
 export type BusinessModelQueryParameter = string[];
 
+export type SectorQueryParameter = string[];
+
 export type ListCompaniesParams = {
 search?: SearchQueryParameter;
 region?: RegionQueryParameter;
 country?: CountryQueryParameter;
 stage?: StageQueryParameter;
 businessModel?: BusinessModelQueryParameter;
+sector?: SectorQueryParameter;
 };
 
