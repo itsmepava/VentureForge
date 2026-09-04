@@ -2,9 +2,11 @@ import { eq } from "drizzle-orm";
 import { db } from "@workspace/db";
 import {
   discoveredCompanies,
+  githubEventSnapshots,
   organizations,
   portfolioSources,
   savedSearches,
+  signalAlerts,
   users,
 } from "@workspace/db";
 import { logger } from "./logger";
@@ -150,7 +152,10 @@ export function ensureDemoData() {
       .from(organizations)
       .where(eq(organizations.id, DEMO_ORGANIZATION_ID))
       .limit(1);
-    if (existingOrg.length) return;
+    if (existingOrg.length) {
+      await ensureDemoSignalData();
+      return;
+    }
 
     await db.insert(organizations).values({
       id: DEMO_ORGANIZATION_ID,
@@ -171,6 +176,7 @@ export function ensureDemoData() {
         organizationId: DEMO_ORGANIZATION_ID,
       })),
     );
+    await ensureDemoSignalData();
     await db.insert(savedSearches).values([
       {
         id: "00000000-0000-4000-8000-000000000201",
@@ -218,6 +224,56 @@ export function ensureDemoData() {
     throw error;
   });
   return seedPromise;
+}
+
+async function ensureDemoSignalData() {
+  const [existingAlert] = await db
+    .select({ id: signalAlerts.id })
+    .from(signalAlerts)
+    .where(eq(signalAlerts.organizationId, DEMO_ORGANIZATION_ID))
+    .limit(1);
+  if (!existingAlert) {
+    await db.insert(signalAlerts).values({
+      id: "00000000-0000-4000-8000-000000000401",
+      organizationId: DEMO_ORGANIZATION_ID,
+      companyId: companySeed[0].id,
+      rule: "weekend_velocity_300",
+      title: "Pre-Intent Stealth Alert",
+      description: "Weekend commit velocity spiked 340% for a tracked developer.",
+      severity: "high",
+      percentageChange: 340,
+      detectedAt: new Date(Date.now() - 1000 * 60 * 24),
+    });
+  }
+
+  const existingSnapshot = await db
+    .select({ id: githubEventSnapshots.id })
+    .from(githubEventSnapshots)
+    .where(eq(githubEventSnapshots.organizationId, DEMO_ORGANIZATION_ID))
+    .limit(1);
+  if (!existingSnapshot.length) {
+    const currentWeekendStart = new Date();
+    currentWeekendStart.setUTCHours(0, 0, 0, 0);
+    currentWeekendStart.setUTCDate(currentWeekendStart.getUTCDate() - ((currentWeekendStart.getUTCDay() + 2) % 7));
+    await db.insert(githubEventSnapshots).values(
+      [1, 2, 1].map((weekendCommitCount, index) => {
+        const windowStart = new Date(currentWeekendStart);
+        windowStart.setUTCDate(windowStart.getUTCDate() - (index + 1) * 7);
+        const windowEnd = new Date(windowStart);
+        windowEnd.setUTCDate(windowEnd.getUTCDate() + 3);
+        return {
+          organizationId: DEMO_ORGANIZATION_ID,
+          companyId: companySeed[0].id,
+          windowStart,
+          windowEnd,
+          weekendCommitCount,
+          eventCount: weekendCommitCount,
+          observedAt: windowEnd,
+          source: "GitHub Events baseline",
+        };
+      }),
+    );
+  }
 }
 
 export const demoCompanies = companySeed;

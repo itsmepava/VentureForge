@@ -7,6 +7,7 @@ import {
 import {
   db,
   discoveredCompanies,
+  signalAlerts,
   portfolioSources,
 } from "@workspace/db";
 import { DEMO_ORGANIZATION_ID, ensureDemoData } from "../lib/demo-data";
@@ -56,7 +57,7 @@ router.get("/dashboard/summary", async (_req, res, next) => {
 router.get("/dashboard/activity", async (_req, res, next) => {
   try {
     await ensureDemoData();
-    const [companies, source] = await Promise.all([
+    const [companies, source, alerts] = await Promise.all([
       db
         .select()
         .from(discoveredCompanies)
@@ -69,17 +70,23 @@ router.get("/dashboard/activity", async (_req, res, next) => {
         .where(eq(portfolioSources.organizationId, DEMO_ORGANIZATION_ID))
         .orderBy(desc(portfolioSources.createdAt))
         .limit(1),
+      db
+        .select()
+        .from(signalAlerts)
+        .where(eq(signalAlerts.organizationId, DEMO_ORGANIZATION_ID))
+        .orderBy(desc(signalAlerts.detectedAt))
+        .limit(5),
     ]);
     const items = [
-      {
-        id: "activity-alert-1",
+      ...alerts.map((alert) => ({
+        id: `activity-alert-${alert.id}`,
         kind: "alert",
-        title: "Pre-Intent Stealth Alert",
-        description: "Weekend commit velocity spiked 340% for a tracked developer.",
-        timestamp: new Date(Date.now() - 1000 * 60 * 24).toISOString(),
-        companyId: companies[0]?.id ?? null,
-        severity: "high",
-      },
+        title: alert.title,
+        description: alert.description,
+        timestamp: alert.detectedAt.toISOString(),
+        companyId: alert.companyId,
+        severity: alert.severity,
+      })),
       ...companies.slice(0, 2).map((company, index) => ({
         id: `activity-company-${company.id}`,
         kind: "company",

@@ -25,6 +25,8 @@ import type {
   BillingStatus,
   DashboardSummary,
   DiscoveredCompany,
+  ExportCompaniesCsvParams,
+  ExportCompaniesPdfParams,
   HealthStatus,
   IntegrationConnection,
   IntegrationDeliveryInput,
@@ -454,6 +456,190 @@ export function useGetCompany<TData = Awaited<ReturnType<typeof getCompany>>, TE
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
   const queryOptions = getGetCompanyQueryOptions(companyId,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getExportCompaniesCsvUrl = (params?: ExportCompaniesCsvParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    const explodeParameters = ["region","country","stage","businessModel","sector"];
+
+    if (Array.isArray(value) && explodeParameters.includes(key)) {
+      value.forEach((v) => {
+        normalizedParams.append(key, v === null ? 'null' : String(v));
+      });
+      return;
+    }
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/companies/export.csv?${stringifiedParams}` : `/api/companies/export.csv`
+}
+
+/**
+ * @summary Export filtered companies as CSV
+ */
+export const exportCompaniesCsv = async (params?: ExportCompaniesCsvParams, options?: Parameters<typeof customFetch>[1]): Promise<Blob> => {
+
+  return customFetch<Blob>(getExportCompaniesCsvUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getExportCompaniesCsvQueryKey = (params?: ExportCompaniesCsvParams,) => {
+    return [
+    `/api/companies/export.csv`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getExportCompaniesCsvQueryOptions = <TData = Awaited<ReturnType<typeof exportCompaniesCsv>>, TError = ErrorType<unknown>>(params?: ExportCompaniesCsvParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof exportCompaniesCsv>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getExportCompaniesCsvQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof exportCompaniesCsv>>> = ({ signal }) => exportCompaniesCsv(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof exportCompaniesCsv>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ExportCompaniesCsvQueryResult = NonNullable<Awaited<ReturnType<typeof exportCompaniesCsv>>>
+export type ExportCompaniesCsvQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Export filtered companies as CSV
+ */
+
+export function useExportCompaniesCsv<TData = Awaited<ReturnType<typeof exportCompaniesCsv>>, TError = ErrorType<unknown>>(
+ params?: ExportCompaniesCsvParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof exportCompaniesCsv>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getExportCompaniesCsvQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getExportCompaniesPdfUrl = (params?: ExportCompaniesPdfParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    const explodeParameters = ["region","country","stage","businessModel","sector"];
+
+    if (Array.isArray(value) && explodeParameters.includes(key)) {
+      value.forEach((v) => {
+        normalizedParams.append(key, v === null ? 'null' : String(v));
+      });
+      return;
+    }
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/companies/export.pdf?${stringifiedParams}` : `/api/companies/export.pdf`
+}
+
+/**
+ * @summary Export filtered companies as PDF
+ */
+export const exportCompaniesPdf = async (params?: ExportCompaniesPdfParams, options?: Parameters<typeof customFetch>[1]): Promise<Blob> => {
+
+  return customFetch<Blob>(getExportCompaniesPdfUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getExportCompaniesPdfQueryKey = (params?: ExportCompaniesPdfParams,) => {
+    return [
+    `/api/companies/export.pdf`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getExportCompaniesPdfQueryOptions = <TData = Awaited<ReturnType<typeof exportCompaniesPdf>>, TError = ErrorType<unknown>>(params?: ExportCompaniesPdfParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof exportCompaniesPdf>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getExportCompaniesPdfQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof exportCompaniesPdf>>> = ({ signal }) => exportCompaniesPdf(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof exportCompaniesPdf>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ExportCompaniesPdfQueryResult = NonNullable<Awaited<ReturnType<typeof exportCompaniesPdf>>>
+export type ExportCompaniesPdfQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Export filtered companies as PDF
+ */
+
+export function useExportCompaniesPdf<TData = Awaited<ReturnType<typeof exportCompaniesPdf>>, TError = ErrorType<unknown>>(
+ params?: ExportCompaniesPdfParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof exportCompaniesPdf>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getExportCompaniesPdfQueryOptions(params,options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 

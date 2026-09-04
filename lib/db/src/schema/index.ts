@@ -48,6 +48,37 @@ export const providerConnections = pgTable("provider_connections", {
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
+export const githubEventSnapshots = pgTable("github_event_snapshots", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  organizationId: uuid("organization_id")
+    .notNull()
+    .references(() => organizations.id),
+  companyId: uuid("company_id")
+    .notNull()
+    .references(() => discoveredCompanies.id),
+  windowStart: timestamp("window_start").notNull(),
+  windowEnd: timestamp("window_end").notNull(),
+  weekendCommitCount: integer("weekend_commit_count").notNull().default(0),
+  eventCount: integer("event_count").notNull().default(0),
+  observedAt: timestamp("observed_at").notNull().defaultNow(),
+  source: text("source").notNull().default("GitHub Events"),
+});
+
+export const signalAlerts = pgTable("signal_alerts", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  organizationId: uuid("organization_id")
+    .notNull()
+    .references(() => organizations.id),
+  companyId: uuid("company_id").references(() => discoveredCompanies.id),
+  rule: text("rule").notNull(),
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+  severity: text("severity").notNull().default("high"),
+  percentageChange: integer("percentage_change"),
+  detectedAt: timestamp("detected_at").notNull().defaultNow(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
 export const organizations = pgTable("organizations", {
   id: uuid("id").defaultRandom().primaryKey(),
   companyName: text("company_name").notNull(),
@@ -145,6 +176,8 @@ export const insertCompanySchema = createInsertSchema(discoveredCompanies);
 export const insertSavedSearchSchema = createInsertSchema(savedSearches);
 export const insertPortfolioSourceSchema = createInsertSchema(portfolioSources);
 export const insertProviderConnectionSchema = createInsertSchema(providerConnections);
+export const insertGitHubEventSnapshotSchema = createInsertSchema(githubEventSnapshots);
+export const insertSignalAlertSchema = createInsertSchema(signalAlerts);
 
 export type Organization = typeof organizations.$inferSelect;
 export type User = typeof users.$inferSelect;
@@ -152,5 +185,7 @@ export type DiscoveredCompany = typeof discoveredCompanies.$inferSelect;
 export type SavedSearch = typeof savedSearches.$inferSelect;
 export type PortfolioSource = typeof portfolioSources.$inferSelect;
 export type ProviderConnection = typeof providerConnections.$inferSelect;
+export type GitHubEventSnapshot = typeof githubEventSnapshots.$inferSelect;
+export type SignalAlert = typeof signalAlerts.$inferSelect;
 export const emptyJson = sql`'{}'::jsonb`;
 export { z };

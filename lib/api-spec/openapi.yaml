@@ -99,6 +99,46 @@ paths:
                 $ref: "#/components/schemas/DiscoveredCompany"
         "404":
           description: Company not found
+  /companies/export.csv:
+    get:
+      operationId: exportCompaniesCsv
+      tags: [companies]
+      summary: Export filtered companies as CSV
+      parameters:
+        - $ref: "#/components/parameters/SearchQuery"
+        - $ref: "#/components/parameters/RegionQuery"
+        - $ref: "#/components/parameters/CountryQuery"
+        - $ref: "#/components/parameters/StageQuery"
+        - $ref: "#/components/parameters/BusinessModelQuery"
+        - $ref: "#/components/parameters/SectorQuery"
+      responses:
+        "200":
+          description: CSV company export
+          content:
+            text/csv:
+              schema:
+                type: string
+                format: binary
+  /companies/export.pdf:
+    get:
+      operationId: exportCompaniesPdf
+      tags: [companies]
+      summary: Export filtered companies as PDF
+      parameters:
+        - $ref: "#/components/parameters/SearchQuery"
+        - $ref: "#/components/parameters/RegionQuery"
+        - $ref: "#/components/parameters/CountryQuery"
+        - $ref: "#/components/parameters/StageQuery"
+        - $ref: "#/components/parameters/BusinessModelQuery"
+        - $ref: "#/components/parameters/SectorQuery"
+      responses:
+        "200":
+          description: PDF company export
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
   /saved-searches:
     get:
       operationId: listSavedSearches

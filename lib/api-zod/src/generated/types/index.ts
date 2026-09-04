@@ -20,6 +20,8 @@ export * from './dashboardSummary';
 export * from './discoveredCompany';
 export * from './discoveredCompanyLastFundingRound';
 export * from './discoveredCompanySignalLabel';
+export * from './exportCompaniesCsvParams';
+export * from './exportCompaniesPdfParams';
 export * from './filterParams';
 export * from './founder';
 export * from './healthStatus';

@@ -142,6 +142,36 @@ export const GetCompanyResponse = zod.object({
 
 
 /**
+ * @summary Export filtered companies as CSV
+ */
+export const ExportCompaniesCsvQueryParams = zod.object({
+  "search": zod.coerce.string().optional(),
+  "region": zod.array(zod.coerce.string()).optional(),
+  "country": zod.array(zod.coerce.string()).optional(),
+  "stage": zod.array(zod.coerce.string()).optional(),
+  "businessModel": zod.array(zod.coerce.string()).optional(),
+  "sector": zod.array(zod.coerce.string()).optional()
+})
+
+export const ExportCompaniesCsvResponse = zod.unknown()
+
+
+/**
+ * @summary Export filtered companies as PDF
+ */
+export const ExportCompaniesPdfQueryParams = zod.object({
+  "search": zod.coerce.string().optional(),
+  "region": zod.array(zod.coerce.string()).optional(),
+  "country": zod.array(zod.coerce.string()).optional(),
+  "stage": zod.array(zod.coerce.string()).optional(),
+  "businessModel": zod.array(zod.coerce.string()).optional(),
+  "sector": zod.array(zod.coerce.string()).optional()
+})
+
+export const ExportCompaniesPdfResponse = zod.unknown()
+
+
+/**
  * @summary List saved searches
  */
 export const ListSavedSearchesResponseItem = zod.object({

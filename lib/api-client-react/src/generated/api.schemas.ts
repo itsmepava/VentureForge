@@ -286,3 +286,21 @@ businessModel?: BusinessModelQueryParameter;
 sector?: SectorQueryParameter;
 };
 
+export type ExportCompaniesCsvParams = {
+search?: SearchQueryParameter;
+region?: RegionQueryParameter;
+country?: CountryQueryParameter;
+stage?: StageQueryParameter;
+businessModel?: BusinessModelQueryParameter;
+sector?: SectorQueryParameter;
+};
+
+export type ExportCompaniesPdfParams = {
+search?: SearchQueryParameter;
+region?: RegionQueryParameter;
+country?: CountryQueryParameter;
+stage?: StageQueryParameter;
+businessModel?: BusinessModelQueryParameter;
+sector?: SectorQueryParameter;
+};
+
