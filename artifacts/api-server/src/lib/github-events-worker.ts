@@ -8,6 +8,12 @@ import {
 import { DEMO_ORGANIZATION_ID, ensureDemoData } from "./demo-data";
 import { logger } from "./logger";
 import { readProviderValues } from "./providers";
+import {
+  calculateWeekendBaseline,
+  percentageChangeFromBaseline,
+  qualifiesForStealthAlert,
+  shouldCreateStealthAlert,
+} from "./github-events-rules";
 
 type GitHubEvent = {
   type?: string;
@@ -40,11 +46,6 @@ function eventMatchesCompany(event: GitHubEvent, company: typeof discoveredCompa
     websiteHost = "";
   }
   return repository.includes(companyName) || Boolean(websiteHost && repository.includes(websiteHost));
-}
-
-export function calculateWeekendBaseline(samples: number[]) {
-  if (!samples.length) return 0;
-  return samples.reduce((total, sample) => total + sample, 0) / samples.length;
 }
 
 async function fetchGitHubEvents(token: string) {
@@ -127,8 +128,8 @@ export async function runGitHubEventsScan(now = new Date()) {
       source: "GitHub Events",
     });
 
-    if (baseline <= 0 || observed.commits < baseline * 4) continue;
-    const percentageChange = Math.round(((observed.commits - baseline) / baseline) * 100);
+    if (!qualifiesForStealthAlert(observed.commits, baseline)) continue;
+    const percentageChange = percentageChangeFromBaseline(observed.commits, baseline);
     const [existingAlert] = await db
       .select({ id: signalAlerts.id })
       .from(signalAlerts)
@@ -142,7 +143,7 @@ export async function runGitHubEventsScan(now = new Date()) {
         ),
       )
       .limit(1);
-    if (existingAlert) continue;
+    if (!shouldCreateStealthAlert(observed.commits, baseline, Boolean(existingAlert))) continue;
 
     await db.insert(signalAlerts).values({
       organizationId: DEMO_ORGANIZATION_ID,

@@ -11,6 +11,7 @@ import {
   portfolioSources,
 } from "@workspace/db";
 import { DEMO_ORGANIZATION_ID, ensureDemoData } from "../lib/demo-data";
+import { buildActivityItems } from "../lib/dashboard-activity";
 
 const router: IRouter = Router();
 
@@ -77,35 +78,7 @@ router.get("/dashboard/activity", async (_req, res, next) => {
         .orderBy(desc(signalAlerts.detectedAt))
         .limit(5),
     ]);
-    const items = [
-      ...alerts.map((alert) => ({
-        id: `activity-alert-${alert.id}`,
-        kind: "alert",
-        title: alert.title,
-        description: alert.description,
-        timestamp: alert.detectedAt.toISOString(),
-        companyId: alert.companyId,
-        severity: alert.severity,
-      })),
-      ...companies.slice(0, 2).map((company, index) => ({
-        id: `activity-company-${company.id}`,
-        kind: "company",
-        title: `${company.companyName} matched your thesis`,
-        description: `${company.regionalMetadata.specificCountry} · ${company.lastFundingRound} · ${company.signalScore} signal score`,
-        timestamp: new Date(Date.now() - 1000 * 60 * (58 + index * 47)).toISOString(),
-        companyId: company.id,
-        severity: "medium",
-      })),
-      {
-        id: "activity-scan-1",
-        kind: "scan",
-        title: "Portfolio scan completed",
-        description: source[0] ? `${source[0].companyCount} companies enriched from your portfolio.` : "Portfolio scan completed.",
-        timestamp: new Date(Date.now() - 1000 * 60 * 240).toISOString(),
-        companyId: null,
-        severity: "low",
-      },
-    ];
+    const items = buildActivityItems(companies, source[0], alerts);
     return res.json(GetDashboardActivityResponse.parse(items));
   } catch (error) {
     return next(error);
