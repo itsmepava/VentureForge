@@ -139,6 +139,62 @@ paths:
               schema:
                 type: string
                 format: binary
+  /companies/{companyId}/github-repositories:
+    get:
+      operationId: listCompanyGitHubRepositories
+      tags: [companies]
+      summary: List verified GitHub repositories for a company
+      parameters:
+        - $ref: "#/components/parameters/CompanyId"
+      responses:
+        "200":
+          description: Company repository mappings
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/GitHubRepository"
+        "404":
+          description: Company not found
+    post:
+      operationId: addCompanyGitHubRepository
+      tags: [companies]
+      summary: Verify and add a GitHub repository mapping
+      parameters:
+        - $ref: "#/components/parameters/CompanyId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GitHubRepositoryInput"
+      responses:
+        "201":
+          description: Verified repository mapping
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GitHubRepository"
+        "400":
+          description: Repository could not be verified
+        "404":
+          description: Company not found
+        "503":
+          description: GitHub is not connected
+  /companies/{companyId}/github-repositories/{repositoryId}:
+    delete:
+      operationId: deleteCompanyGitHubRepository
+      tags: [companies]
+      summary: Remove a GitHub repository mapping
+      parameters:
+        - $ref: "#/components/parameters/CompanyId"
+        - $ref: "#/components/parameters/RepositoryId"
+      responses:
+        "204":
+          description: Repository mapping removed
+        "404":
+          description: Repository mapping not found
   /saved-searches:
     get:
       operationId: listSavedSearches
@@ -347,6 +403,12 @@ components:
         type: string
     SearchId:
       name: searchId
+      in: path
+      required: true
+      schema:
+        type: string
+    RepositoryId:
+      name: repositoryId
       in: path
       required: true
       schema:
@@ -656,6 +718,29 @@ components:
     ProviderName:
       type: string
       enum: [github, stripe, notion, google_sheets, slack]
+    GitHubRepository:
+      type: object
+      properties:
+        id:
+          type: string
+        companyId:
+          type: string
+        repository:
+          type: string
+        verified:
+          type: boolean
+        verifiedAt:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+      required: [id, companyId, repository, verified, verifiedAt, createdAt]
+    GitHubRepositoryInput:
+      type: object
+      properties:
+        repository:
+          type: string
+          pattern: "^[^/\\s]+/[^/\\s]+$"
+      required: [repository]
     IntegrationConnection:
       type: object
       properties:
