@@ -876,6 +876,79 @@ export const useDeleteCompanyGitHubRepository = <TError = ErrorType<void>,
       return useMutation(getDeleteCompanyGitHubRepositoryMutationOptions(options));
     }
 
+export const getVerifyCompanyGitHubRepositoryUrl = (companyId: string,
+    repositoryId: string,) => {
+
+
+
+
+  return `/api/companies/${companyId}/github-repositories/${repositoryId}/verify`
+}
+
+/**
+ * @summary Retry GitHub repository access verification
+ */
+export const verifyCompanyGitHubRepository = async (companyId: string,
+    repositoryId: string, options?: Parameters<typeof customFetch>[1]): Promise<GitHubRepository> => {
+
+  return customFetch<GitHubRepository>(getVerifyCompanyGitHubRepositoryUrl(companyId,repositoryId),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+
+export const getVerifyCompanyGitHubRepositoryMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof verifyCompanyGitHubRepository>>, TError,{companyId: string;repositoryId: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof verifyCompanyGitHubRepository>>, TError,{companyId: string;repositoryId: string}, TContext> => {
+
+const mutationKey = ['verifyCompanyGitHubRepository'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof verifyCompanyGitHubRepository>>, {companyId: string;repositoryId: string}> = (props) => {
+          const {companyId,repositoryId} = props ?? {};
+
+          return  verifyCompanyGitHubRepository(companyId,repositoryId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type VerifyCompanyGitHubRepositoryMutationResult = NonNullable<Awaited<ReturnType<typeof verifyCompanyGitHubRepository>>>
+
+    export type VerifyCompanyGitHubRepositoryMutationError = ErrorType<void>
+
+    /**
+ * @summary Retry GitHub repository access verification
+ */
+export const useVerifyCompanyGitHubRepository = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof verifyCompanyGitHubRepository>>, TError,{companyId: string;repositoryId: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof verifyCompanyGitHubRepository>>,
+        TError,
+        {companyId: string;repositoryId: string},
+        TContext
+      > => {
+      return useMutation(getVerifyCompanyGitHubRepositoryMutationOptions(options));
+    }
+
 export const getListSavedSearchesUrl = () => {
 
 

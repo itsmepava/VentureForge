@@ -10,6 +10,7 @@ import { DEMO_ORGANIZATION_ID, ensureDemoData } from "./demo-data";
 import { logger } from "./logger";
 import { readProviderValues } from "./providers";
 import { repositoryMatchesCompany } from "./github-repository-matching";
+import { verifyGitHubRepositoryAccess } from "./github-repository-verification";
 import {
   calculateWeekendBaseline,
   percentageChangeFromBaseline,
@@ -72,15 +73,51 @@ export async function runGitHubEventsScan(now = new Date()) {
     db
       .select()
       .from(companyGithubRepositories)
-      .where(
-        and(
-          eq(companyGithubRepositories.organizationId, DEMO_ORGANIZATION_ID),
-          eq(companyGithubRepositories.verified, true),
-        ),
-      ),
+      .where(eq(companyGithubRepositories.organizationId, DEMO_ORGANIZATION_ID)),
   ]);
-  const repositoriesByCompany = new Map<string, string[]>();
+  const activeRepositoryMappings: typeof repositoryMappings = [];
+  let inaccessibleMappings = 0;
+  let repositoryVerificationFailures = 0;
   for (const mapping of repositoryMappings) {
+    try {
+      const verification = await verifyGitHubRepositoryAccess(token, mapping.repository);
+      await db
+        .update(companyGithubRepositories)
+        .set({
+          repository: verification.repository,
+          verified: verification.verified,
+          verifiedAt: verification.verified ? now : mapping.verifiedAt,
+          lastCheckedAt: now,
+          verificationError: verification.error,
+        })
+        .where(eq(companyGithubRepositories.id, mapping.id));
+      if (!verification.verified) {
+        inaccessibleMappings += 1;
+        logger.warn(
+          { mappingId: mapping.id, companyId: mapping.companyId, repository: mapping.repository },
+          `Nightly GitHub scan skipped inaccessible repository mapping: ${verification.error}`,
+        );
+        continue;
+      }
+      activeRepositoryMappings.push({
+        ...mapping,
+        repository: verification.repository,
+        verified: true,
+        verifiedAt: now,
+        lastCheckedAt: now,
+        verificationError: null,
+      });
+    } catch (error) {
+      repositoryVerificationFailures += 1;
+      logger.warn(
+        { err: error, mappingId: mapping.id, companyId: mapping.companyId, repository: mapping.repository },
+        "Nightly GitHub repository access check failed; preserving the previous mapping state",
+      );
+      if (mapping.verified) activeRepositoryMappings.push(mapping);
+    }
+  }
+  const repositoriesByCompany = new Map<string, string[]>();
+  for (const mapping of activeRepositoryMappings) {
     repositoriesByCompany.set(mapping.companyId, [
       ...(repositoriesByCompany.get(mapping.companyId) ?? []),
       mapping.repository,
@@ -172,10 +209,22 @@ export async function runGitHubEventsScan(now = new Date()) {
   }
 
   logger.info(
-    { alertsCreated, companiesObserved: commitsByCompany.size, eventCount: events.length },
+    {
+      alertsCreated,
+      companiesObserved: commitsByCompany.size,
+      eventCount: events.length,
+      inaccessibleMappings,
+      repositoryVerificationFailures,
+    },
     "GitHub Events worker completed",
   );
-  return { skipped: false, alertsCreated, companiesObserved: commitsByCompany.size };
+  return {
+    skipped: false,
+    alertsCreated,
+    companiesObserved: commitsByCompany.size,
+    inaccessibleMappings,
+    repositoryVerificationFailures,
+  };
 }
 
 function nextRunAt(hour: number, now = new Date()) {

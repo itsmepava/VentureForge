@@ -184,6 +184,8 @@ export const ListCompanyGitHubRepositoriesResponseItem = zod.object({
   "repository": zod.string(),
   "verified": zod.boolean(),
   "verifiedAt": zod.string().nullable(),
+  "lastCheckedAt": zod.string().nullable(),
+  "verificationError": zod.string().nullable(),
   "createdAt": zod.string()
 })
 export const ListCompanyGitHubRepositoriesResponse = zod.array(ListCompanyGitHubRepositoriesResponseItem)
@@ -209,6 +211,8 @@ export const AddCompanyGitHubRepositoryResponse = zod.object({
   "repository": zod.string(),
   "verified": zod.boolean(),
   "verifiedAt": zod.string().nullable(),
+  "lastCheckedAt": zod.string().nullable(),
+  "verificationError": zod.string().nullable(),
   "createdAt": zod.string()
 })
 
@@ -222,6 +226,26 @@ export const DeleteCompanyGitHubRepositoryParams = zod.object({
 })
 
 export const DeleteCompanyGitHubRepositoryResponse = zod.void()
+
+
+/**
+ * @summary Retry GitHub repository access verification
+ */
+export const VerifyCompanyGitHubRepositoryParams = zod.object({
+  "companyId": zod.coerce.string(),
+  "repositoryId": zod.coerce.string()
+})
+
+export const VerifyCompanyGitHubRepositoryResponse = zod.object({
+  "id": zod.string(),
+  "companyId": zod.string(),
+  "repository": zod.string(),
+  "verified": zod.boolean(),
+  "verifiedAt": zod.string().nullable(),
+  "lastCheckedAt": zod.string().nullable(),
+  "verificationError": zod.string().nullable(),
+  "createdAt": zod.string()
+})
 
 
 /**

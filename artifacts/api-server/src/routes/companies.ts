@@ -9,6 +9,8 @@ import {
   GetCompanyResponse,
   ListCompanyGitHubRepositoriesParams,
   ListCompanyGitHubRepositoriesResponse,
+  VerifyCompanyGitHubRepositoryParams,
+  VerifyCompanyGitHubRepositoryResponse,
   ListCompaniesQueryParams,
   ListCompaniesResponse,
 } from "@workspace/api-zod";
@@ -18,6 +20,7 @@ import { matchesCompanyFilters } from "../lib/company-filters";
 import { DEMO_ORGANIZATION_ID, ensureDemoData } from "../lib/demo-data";
 import { serializeCompany } from "../lib/serializers";
 import { readProviderValues } from "../lib/providers";
+import { verifyGitHubRepositoryAccess } from "../lib/github-repository-verification";
 
 const router: IRouter = Router();
 
@@ -90,6 +93,8 @@ function serializeRepository(repository: typeof companyGithubRepositories.$infer
     repository: repository.repository,
     verified: repository.verified,
     verifiedAt: repository.verifiedAt?.toISOString() ?? null,
+    lastCheckedAt: repository.lastCheckedAt?.toISOString() ?? null,
+    verificationError: repository.verificationError,
     createdAt: repository.createdAt.toISOString(),
   };
 }
@@ -139,18 +144,9 @@ router.post("/companies/:companyId/github-repositories", async (req, res, next) 
     const token = github?.values.token ?? github?.values.accessToken;
     if (!token) return res.status(503).json({ error: "Connect GitHub before verifying repository mappings" });
 
-    const response = await fetch(`https://api.github.com/repos/${repository}`, {
-      headers: {
-        Accept: "application/vnd.github+json",
-        Authorization: `Bearer ${token}`,
-        "X-GitHub-Api-Version": "2022-11-28",
-        "User-Agent": "VentureForge/2.0",
-      },
-      signal: AbortSignal.timeout(10_000),
-    });
-    if (!response.ok) return res.status(400).json({ error: "GitHub could not verify that repository" });
-    const verifiedRepository = (await response.json()) as { full_name?: string };
-    const canonicalName = verifiedRepository.full_name ?? repository;
+    const verification = await verifyGitHubRepositoryAccess(token, repository);
+    if (!verification.verified) return res.status(400).json({ error: verification.error });
+    const canonicalName = verification.repository;
     const now = new Date();
     const [created] = await db
       .insert(companyGithubRepositories)
@@ -160,6 +156,8 @@ router.post("/companies/:companyId/github-repositories", async (req, res, next) 
         repository: canonicalName,
         verified: true,
         verifiedAt: now,
+        lastCheckedAt: now,
+        verificationError: null,
       })
       .onConflictDoNothing()
       .returning();
@@ -178,7 +176,18 @@ router.post("/companies/:companyId/github-repositories", async (req, res, next) 
       )
       .limit(1);
     if (!existing) return res.status(409).json({ error: "Repository mapping already exists" });
-    return res.status(201).json(AddCompanyGitHubRepositoryResponse.parse(serializeRepository(existing)));
+    const [updated] = await db
+      .update(companyGithubRepositories)
+      .set({
+        repository: canonicalName,
+        verified: true,
+        verifiedAt: now,
+        lastCheckedAt: now,
+        verificationError: null,
+      })
+      .where(eq(companyGithubRepositories.id, existing.id))
+      .returning();
+    return res.status(201).json(AddCompanyGitHubRepositoryResponse.parse(serializeRepository(updated)));
   } catch (error) {
     return next(error);
   }
@@ -200,6 +209,44 @@ router.delete("/companies/:companyId/github-repositories/:repositoryId", async (
       .returning({ id: companyGithubRepositories.id });
     if (!deleted) return res.status(404).json({ error: "Repository mapping not found" });
     return res.status(204).send();
+  } catch (error) {
+    return next(error);
+  }
+});
+
+router.post("/companies/:companyId/github-repositories/:repositoryId/verify", async (req, res, next) => {
+  try {
+    await ensureDemoData();
+    const { companyId, repositoryId } = VerifyCompanyGitHubRepositoryParams.parse(req.params);
+    const [mapping] = await db
+      .select()
+      .from(companyGithubRepositories)
+      .where(
+        and(
+          eq(companyGithubRepositories.id, repositoryId),
+          eq(companyGithubRepositories.companyId, companyId),
+          eq(companyGithubRepositories.organizationId, DEMO_ORGANIZATION_ID),
+        ),
+      )
+      .limit(1);
+    if (!mapping) return res.status(404).json({ error: "Repository mapping not found" });
+    const github = await readProviderValues("github");
+    const token = github?.values.token ?? github?.values.accessToken;
+    if (!token) return res.status(503).json({ error: "Connect GitHub before verifying repository mappings" });
+    const verification = await verifyGitHubRepositoryAccess(token, mapping.repository);
+    const now = new Date();
+    const [updated] = await db
+      .update(companyGithubRepositories)
+      .set({
+        repository: verification.repository,
+        verified: verification.verified,
+        verifiedAt: verification.verified ? now : mapping.verifiedAt,
+        lastCheckedAt: now,
+        verificationError: verification.error,
+      })
+      .where(eq(companyGithubRepositories.id, mapping.id))
+      .returning();
+    return res.json(VerifyCompanyGitHubRepositoryResponse.parse(serializeRepository(updated)));
   } catch (error) {
     return next(error);
   }

@@ -186,6 +186,10 @@ export interface GitHubRepository {
   verified: boolean;
   /** @nullable */
   verifiedAt: string | null;
+  /** @nullable */
+  lastCheckedAt: string | null;
+  /** @nullable */
+  verificationError: string | null;
   createdAt: string;
 }
 

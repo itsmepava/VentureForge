@@ -93,6 +93,8 @@ export const companyGithubRepositories = pgTable(
     repository: text("repository").notNull(),
     verified: boolean("verified").notNull().default(false),
     verifiedAt: timestamp("verified_at"),
+    lastCheckedAt: timestamp("last_checked_at"),
+    verificationError: text("verification_error"),
     createdAt: timestamp("created_at").notNull().defaultNow(),
   },
   (table) => [

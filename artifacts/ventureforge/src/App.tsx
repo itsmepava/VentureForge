@@ -59,6 +59,7 @@ import {
   useSaveIntegrationVault,
   useDisconnectIntegration,
   useVerifyIntegration,
+  useVerifyCompanyGitHubRepository,
   useTestIntegrationDelivery,
   useGetBillingStatus,
   useCreateBillingPortal,
@@ -387,6 +388,7 @@ function RepositoryMappings() {
   });
   const addMapping = useAddCompanyGitHubRepository();
   const deleteMapping = useDeleteCompanyGitHubRepository();
+  const verifyMapping = useVerifyCompanyGitHubRepository();
   const refresh = () => queryClient.invalidateQueries({ queryKey: getListCompanyGitHubRepositoriesQueryKey(selectedCompanyId) });
   const submit = (event: FormEvent) => {
     event.preventDefault();
@@ -404,7 +406,17 @@ function RepositoryMappings() {
         <label><span className="mb-1.5 block text-xs font-bold">Repository</span><input value={repository} onChange={(event) => setRepository(event.target.value)} required pattern="[^/\s]+/[^/\s]+" placeholder="owner/repository" className="h-10 w-full rounded-lg border border-[hsl(var(--input))] bg-[hsl(var(--background))] px-3 text-sm outline-none focus:border-[hsl(var(--foreground))]" data-testid="input-github-repository" /></label>
         <button disabled={addMapping.isPending || !selectedCompanyId} type="submit" className="mt-[22px] inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-[hsl(var(--primary))] px-4 text-xs font-bold text-white disabled:opacity-50" data-testid="button-add-github-repository">{addMapping.isPending ? <LoaderCircle size={14} className="animate-spin" /> : <Plus size={14} />} Verify & add</button>
       </form>
-      <div className="mt-5 border-t border-[hsl(var(--border))] pt-4">{mappings.isLoading ? <SkeletonRows count={2} /> : mappings.isError ? <DataError label="repository mappings" onRetry={() => mappings.refetch()} /> : (mappings.data ?? []).length === 0 ? <p className="text-xs text-[hsl(var(--muted-foreground))]">No verified repositories mapped to this company.</p> : <div className="space-y-2">{(mappings.data ?? []).map((mapping) => <div key={mapping.id} className="flex items-center gap-3 rounded-lg border border-[hsl(var(--border))] px-3 py-2.5"><Check size={14} className="text-[#667520]" /><a href={`https://github.com/${mapping.repository}`} target="_blank" rel="noreferrer" className="min-w-0 flex-1 truncate font-mono text-xs font-bold hover:underline">{mapping.repository}</a><span className="text-[10px] font-bold text-[#667520]">Verified</span><button onClick={() => deleteMapping.mutate({ companyId: selectedCompanyId, repositoryId: mapping.id }, { onSuccess: refresh })} className="rounded-md p-1.5 text-[hsl(var(--muted-foreground))] hover:bg-[#f5d8d1] hover:text-[#8f382e]" aria-label={`Remove ${mapping.repository}`} data-testid={`button-delete-repository-${mapping.id}`}><Trash2 size={14} /></button></div>)}</div>}</div>
+      <div className="mt-5 border-t border-[hsl(var(--border))] pt-4">
+        {mappings.isLoading ? <SkeletonRows count={2} /> : mappings.isError ? <DataError label="repository mappings" onRetry={() => mappings.refetch()} /> : (mappings.data ?? []).length === 0 ? <p className="text-xs text-[hsl(var(--muted-foreground))]">No repository mappings for this company.</p> : <div className="space-y-2">
+          {(mappings.data ?? []).map((mapping) => <div key={mapping.id} className={`flex flex-wrap items-center gap-3 rounded-lg border px-3 py-2.5 ${mapping.verified ? 'border-[hsl(var(--border))]' : 'border-[#d9a99f] bg-[#fdf4f1]'}`}>
+            {mapping.verified ? <Check size={14} className="text-[#667520]" /> : <CircleHelp size={14} className="text-[#9b4539]" />}
+            <div className="min-w-0 flex-1"><a href={`https://github.com/${mapping.repository}`} target="_blank" rel="noreferrer" className="block truncate font-mono text-xs font-bold hover:underline">{mapping.repository}</a>{!mapping.verified && <div className="mt-1 text-[10px] text-[#8f382e]">{mapping.verificationError ?? 'Repository access needs verification'}</div>}</div>
+            <span className={`text-[10px] font-bold ${mapping.verified ? 'text-[#667520]' : 'text-[#8f382e]'}`}>{mapping.verified ? 'Verified' : 'Inaccessible'}</span>
+            {!mapping.verified && <button onClick={() => verifyMapping.mutate({ companyId: selectedCompanyId, repositoryId: mapping.id }, { onSuccess: refresh, onError: () => window.alert('Could not retry verification. Confirm GitHub is connected.') })} disabled={verifyMapping.isPending} className="rounded-md border border-[#d9a99f] px-2.5 py-1.5 text-[10px] font-bold text-[#8f382e] hover:bg-white disabled:opacity-50" data-testid={`button-retry-repository-${mapping.id}`}>Retry</button>}
+            <button onClick={() => deleteMapping.mutate({ companyId: selectedCompanyId, repositoryId: mapping.id }, { onSuccess: refresh })} className="rounded-md p-1.5 text-[hsl(var(--muted-foreground))] hover:bg-[#f5d8d1] hover:text-[#8f382e]" aria-label={`Remove ${mapping.repository}`} data-testid={`button-delete-repository-${mapping.id}`}><Trash2 size={14} /></button>
+          </div>)}
+        </div>}
+      </div>
     </div>
   </section>;
 }

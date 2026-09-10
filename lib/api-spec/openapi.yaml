@@ -195,6 +195,25 @@ paths:
           description: Repository mapping removed
         "404":
           description: Repository mapping not found
+  /companies/{companyId}/github-repositories/{repositoryId}/verify:
+    post:
+      operationId: verifyCompanyGitHubRepository
+      tags: [companies]
+      summary: Retry GitHub repository access verification
+      parameters:
+        - $ref: "#/components/parameters/CompanyId"
+        - $ref: "#/components/parameters/RepositoryId"
+      responses:
+        "200":
+          description: Updated repository verification state
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GitHubRepository"
+        "404":
+          description: Repository mapping not found
+        "503":
+          description: GitHub is not connected
   /saved-searches:
     get:
       operationId: listSavedSearches
@@ -731,9 +750,13 @@ components:
           type: boolean
         verifiedAt:
           type: ["string", "null"]
+        lastCheckedAt:
+          type: ["string", "null"]
+        verificationError:
+          type: ["string", "null"]
         createdAt:
           type: string
-      required: [id, companyId, repository, verified, verifiedAt, createdAt]
+      required: [id, companyId, repository, verified, verifiedAt, lastCheckedAt, verificationError, createdAt]
     GitHubRepositoryInput:
       type: object
       properties:
