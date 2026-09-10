@@ -3,6 +3,7 @@ import { logger } from "./lib/logger";
 import { runMigrations } from "stripe-replit-sync";
 import { getStripeSync } from "./lib/stripeClient";
 import { scheduleNightlyGitHubEventsWorker } from "./lib/github-events-worker";
+import { runApplicationMigrations } from "@workspace/db";
 
 const rawPort = process.env["PORT"];
 
@@ -17,6 +18,9 @@ const port = Number(rawPort);
 if (Number.isNaN(port) || port <= 0) {
   throw new Error(`Invalid PORT value: "${rawPort}"`);
 }
+
+await runApplicationMigrations();
+logger.info("Application database migrations completed");
 
 if (process.env.STRIPE_SYNC_ENABLED === "true") {
   if (!process.env.DATABASE_URL) {
