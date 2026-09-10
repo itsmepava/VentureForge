@@ -232,6 +232,8 @@ CREATE TABLE IF NOT EXISTS archived_organization_stripe_conflicts (
   archived_at timestamp NOT NULL DEFAULT now()
 );
 
+LOCK TABLE organizations IN SHARE ROW EXCLUSIVE MODE;
+
 WITH ranked AS (
   SELECT id, stripe_customer_id,
     row_number() OVER (
