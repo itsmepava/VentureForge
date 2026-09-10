@@ -58,3 +58,13 @@ test("CSV and PDF exports contain the same active-filtered company set", () => {
   assert.doesNotMatch(pdf, /Excluded Health/);
   assert.match(pdf, /^%PDF-1\.4/);
 });
+
+test("CSV exports neutralize spreadsheet formulas", () => {
+  const csv = companiesToCsv([
+    {
+      ...companies[0],
+      companyName: "=HYPERLINK(\"https://malicious.example\")",
+    },
+  ]);
+  assert.match(csv, /"'=HYPERLINK\(""https:\/\/malicious\.example""\)"/);
+});

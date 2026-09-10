@@ -1,6 +1,7 @@
 import { and, eq, gte, lt } from "drizzle-orm";
 import {
   db,
+  pool,
   companyGithubRepositories,
   discoveredCompanies,
   githubEventSnapshots,
@@ -11,11 +12,11 @@ import { logger } from "./logger";
 import { readProviderValues } from "./providers";
 import { repositoryMatchesCompany } from "./github-repository-matching";
 import { verifyGitHubRepositoryAccess } from "./github-repository-verification";
+import { fetchRepositoryCommitCount } from "./github-commit-collection";
 import {
   calculateWeekendBaseline,
   percentageChangeFromBaseline,
   qualifiesForStealthAlert,
-  shouldCreateStealthAlert,
 } from "./github-events-rules";
 
 type GitHubEvent = {
@@ -50,7 +51,7 @@ async function fetchGitHubEvents(token: string) {
   return (await response.json()) as GitHubEvent[];
 }
 
-export async function runGitHubEventsScan(now = new Date()) {
+async function runGitHubEventsScanUnlocked(now = new Date()) {
   await ensureDemoData();
   const configured = await readProviderValues("github");
   if (!configured) {
@@ -63,7 +64,6 @@ export async function runGitHubEventsScan(now = new Date()) {
     return { skipped: true, reason: "token_missing", alertsCreated: 0, companiesObserved: 0 };
   }
 
-  const events = await fetchGitHubEvents(token);
   const { start, end } = weekendWindow(now);
   const [companies, repositoryMappings] = await Promise.all([
     db
@@ -124,13 +124,30 @@ export async function runGitHubEventsScan(now = new Date()) {
     ]);
   }
   const commitsByCompany = new Map<string, { commits: number; events: number }>();
+  for (const [companyId, repositories] of repositoriesByCompany) {
+    for (const repository of repositories) {
+      try {
+        const commitCount = await fetchRepositoryCommitCount(token, repository, start, end);
+        const current = commitsByCompany.get(companyId) ?? { commits: 0, events: 0 };
+        current.commits += commitCount;
+        current.events += commitCount;
+        commitsByCompany.set(companyId, current);
+      } catch (error) {
+        logger.warn({ err: error, companyId, repository }, "GitHub repository commit collection failed");
+      }
+    }
+  }
+
+  const explicitlyMappedCompanyIds = new Set(repositoryMappings.map((mapping) => mapping.companyId));
+  const fallbackCompanies = companies.filter((company) => !explicitlyMappedCompanyIds.has(company.id));
+  const events = fallbackCompanies.length ? await fetchGitHubEvents(token) : [];
   for (const event of events) {
     if (event.type !== "PushEvent" || !event.created_at) continue;
     const createdAt = new Date(event.created_at);
     if (createdAt < start || createdAt >= end) continue;
     const commitCount = Math.max(1, event.payload?.commits?.length ?? 0);
-    for (const company of companies) {
-      if (!repositoryMatchesCompany(event.repo?.name ?? "", company, repositoriesByCompany.get(company.id) ?? [])) continue;
+    for (const company of fallbackCompanies) {
+      if (!repositoryMatchesCompany(event.repo?.name ?? "", company, [])) continue;
       const current = commitsByCompany.get(company.id) ?? { commits: 0, events: 0 };
       current.commits += commitCount;
       current.events += 1;
@@ -155,44 +172,52 @@ export async function runGitHubEventsScan(now = new Date()) {
         ),
       );
     const baseline = calculateWeekendBaseline(history.map((sample) => sample.weekendCommitCount));
-    await db.insert(githubEventSnapshots).values({
-      organizationId: DEMO_ORGANIZATION_ID,
-      companyId: company.id,
-      windowStart: start,
-      windowEnd: end,
-      weekendCommitCount: observed.commits,
-      eventCount: observed.events,
-      observedAt: now,
-      source: "GitHub Events",
-    });
+    await db
+      .insert(githubEventSnapshots)
+      .values({
+        organizationId: DEMO_ORGANIZATION_ID,
+        companyId: company.id,
+        windowStart: start,
+        windowEnd: end,
+        weekendCommitCount: observed.commits,
+        eventCount: observed.events,
+        observedAt: now,
+        source: "GitHub",
+      })
+      .onConflictDoUpdate({
+        target: [
+          githubEventSnapshots.organizationId,
+          githubEventSnapshots.companyId,
+          githubEventSnapshots.windowStart,
+        ],
+        set: {
+          windowEnd: end,
+          weekendCommitCount: observed.commits,
+          eventCount: observed.events,
+          observedAt: now,
+          source: "GitHub",
+        },
+      });
 
     if (!qualifiesForStealthAlert(observed.commits, baseline)) continue;
     const percentageChange = percentageChangeFromBaseline(observed.commits, baseline);
-    const [existingAlert] = await db
-      .select({ id: signalAlerts.id })
-      .from(signalAlerts)
-      .where(
-        and(
-          eq(signalAlerts.organizationId, DEMO_ORGANIZATION_ID),
-          eq(signalAlerts.companyId, company.id),
-          eq(signalAlerts.rule, "weekend_velocity_300"),
-          gte(signalAlerts.detectedAt, start),
-          lt(signalAlerts.detectedAt, end),
-        ),
-      )
-      .limit(1);
-    if (!shouldCreateStealthAlert(observed.commits, baseline, Boolean(existingAlert))) continue;
-
-    await db.insert(signalAlerts).values({
-      organizationId: DEMO_ORGANIZATION_ID,
-      companyId: company.id,
-      rule: "weekend_velocity_300",
-      title: "Pre-Intent Stealth Alert",
-      description: `Weekend commit velocity spiked ${percentageChange}% for ${company.companyName}.`,
-      severity: "high",
-      percentageChange,
-      detectedAt: now,
-    });
+    const [createdAlert] = await db
+      .insert(signalAlerts)
+      .values({
+        organizationId: DEMO_ORGANIZATION_ID,
+        companyId: company.id,
+        rule: "weekend_velocity_300",
+        title: "Pre-Intent Stealth Alert",
+        description: `Weekend commit velocity spiked ${percentageChange}% for ${company.companyName}.`,
+        severity: "high",
+        percentageChange,
+        windowStart: start,
+        windowEnd: end,
+        detectedAt: now,
+      })
+      .onConflictDoNothing()
+      .returning({ id: signalAlerts.id });
+    if (!createdAlert) continue;
     await db
       .update(discoveredCompanies)
       .set({
@@ -225,6 +250,27 @@ export async function runGitHubEventsScan(now = new Date()) {
     inaccessibleMappings,
     repositoryVerificationFailures,
   };
+}
+
+export async function runGitHubEventsScan(now = new Date()) {
+  const client = await pool.connect();
+  try {
+    const lock = await client.query<{ acquired: boolean }>(
+      "select pg_try_advisory_lock(hashtext($1)) as acquired",
+      ["ventureforge_github_events_scan"],
+    );
+    if (!lock.rows[0]?.acquired) {
+      logger.info("GitHub Events worker skipped: another scan is already running");
+      return { skipped: true, reason: "scan_in_progress", alertsCreated: 0, companiesObserved: 0 };
+    }
+    try {
+      return await runGitHubEventsScanUnlocked(now);
+    } finally {
+      await client.query("select pg_advisory_unlock(hashtext($1))", ["ventureforge_github_events_scan"]);
+    }
+  } finally {
+    client.release();
+  }
 }
 
 function nextRunAt(hour: number, now = new Date()) {

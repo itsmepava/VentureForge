@@ -49,36 +49,59 @@ export const providerConnections = pgTable("provider_connections", {
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
-export const githubEventSnapshots = pgTable("github_event_snapshots", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  organizationId: uuid("organization_id")
-    .notNull()
-    .references(() => organizations.id),
-  companyId: uuid("company_id")
-    .notNull()
-    .references(() => discoveredCompanies.id),
-  windowStart: timestamp("window_start").notNull(),
-  windowEnd: timestamp("window_end").notNull(),
-  weekendCommitCount: integer("weekend_commit_count").notNull().default(0),
-  eventCount: integer("event_count").notNull().default(0),
-  observedAt: timestamp("observed_at").notNull().defaultNow(),
-  source: text("source").notNull().default("GitHub Events"),
-});
+export const githubEventSnapshots = pgTable(
+  "github_event_snapshots",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    organizationId: uuid("organization_id")
+      .notNull()
+      .references(() => organizations.id),
+    companyId: uuid("company_id")
+      .notNull()
+      .references(() => discoveredCompanies.id),
+    windowStart: timestamp("window_start").notNull(),
+    windowEnd: timestamp("window_end").notNull(),
+    weekendCommitCount: integer("weekend_commit_count").notNull().default(0),
+    eventCount: integer("event_count").notNull().default(0),
+    observedAt: timestamp("observed_at").notNull().defaultNow(),
+    source: text("source").notNull().default("GitHub Events"),
+  },
+  (table) => [
+    uniqueIndex("github_event_snapshots_org_company_window_unique").on(
+      table.organizationId,
+      table.companyId,
+      table.windowStart,
+    ),
+  ],
+);
 
-export const signalAlerts = pgTable("signal_alerts", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  organizationId: uuid("organization_id")
-    .notNull()
-    .references(() => organizations.id),
-  companyId: uuid("company_id").references(() => discoveredCompanies.id),
-  rule: text("rule").notNull(),
-  title: text("title").notNull(),
-  description: text("description").notNull(),
-  severity: text("severity").notNull().default("high"),
-  percentageChange: integer("percentage_change"),
-  detectedAt: timestamp("detected_at").notNull().defaultNow(),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-});
+export const signalAlerts = pgTable(
+  "signal_alerts",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    organizationId: uuid("organization_id")
+      .notNull()
+      .references(() => organizations.id),
+    companyId: uuid("company_id").references(() => discoveredCompanies.id),
+    rule: text("rule").notNull(),
+    title: text("title").notNull(),
+    description: text("description").notNull(),
+    severity: text("severity").notNull().default("high"),
+    percentageChange: integer("percentage_change"),
+    windowStart: timestamp("window_start"),
+    windowEnd: timestamp("window_end"),
+    detectedAt: timestamp("detected_at").notNull().defaultNow(),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("signal_alerts_org_company_rule_window_unique").on(
+      table.organizationId,
+      table.companyId,
+      table.rule,
+      table.windowStart,
+    ),
+  ],
+);
 
 export const companyGithubRepositories = pgTable(
   "company_github_repositories",
@@ -98,9 +121,8 @@ export const companyGithubRepositories = pgTable(
     createdAt: timestamp("created_at").notNull().defaultNow(),
   },
   (table) => [
-    uniqueIndex("company_github_repositories_org_company_repo_unique").on(
+    uniqueIndex("company_github_repositories_org_repo_unique").on(
       table.organizationId,
-      table.companyId,
       sql`lower(${table.repository})`,
     ),
   ],

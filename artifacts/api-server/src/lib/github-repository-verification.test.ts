@@ -28,3 +28,14 @@ test("treats transient GitHub failures as errors instead of access revocation", 
     /HTTP 500/,
   );
 });
+
+test("treats GitHub rate-limit responses as transient", async () => {
+  const fetchImpl = (async () => new Response(null, {
+    status: 403,
+    headers: { "X-RateLimit-Remaining": "0" },
+  })) as typeof fetch;
+  await assert.rejects(
+    verifyGitHubRepositoryAccess("token", "owner/repository", fetchImpl),
+    /rate limited/,
+  );
+});

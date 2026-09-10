@@ -22,6 +22,13 @@ export async function verifyGitHubRepositoryAccess(
       error: null,
     };
   }
+  if (response.status === 403) {
+    const remaining = response.headers.get("x-ratelimit-remaining");
+    const retryAfter = response.headers.get("retry-after");
+    if (remaining === "0" || retryAfter) {
+      throw new Error("GitHub repository verification was rate limited");
+    }
+  }
   if (response.status === 403 || response.status === 404) {
     return {
       verified: false as const,
