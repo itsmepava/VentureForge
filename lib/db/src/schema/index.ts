@@ -128,19 +128,30 @@ export const companyGithubRepositories = pgTable(
   ],
 );
 
-export const organizations = pgTable("organizations", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  companyName: text("company_name").notNull(),
-  subscriptionTier: subscriptionTierEnum("subscription_tier")
-    .notNull()
-    .default("Free"),
-  stripeCustomerId: text("stripe_customer_id"),
-  stripeSubscriptionId: text("stripe_subscription_id"),
-  subscriptionStatus: subscriptionStatusEnum("subscription_status")
-    .notNull()
-    .default("active"),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-});
+export const organizations = pgTable(
+  "organizations",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    companyName: text("company_name").notNull(),
+    subscriptionTier: subscriptionTierEnum("subscription_tier")
+      .notNull()
+      .default("Free"),
+    stripeCustomerId: text("stripe_customer_id"),
+    stripeSubscriptionId: text("stripe_subscription_id"),
+    subscriptionStatus: subscriptionStatusEnum("subscription_status")
+      .notNull()
+      .default("active"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("organizations_stripe_customer_unique")
+      .on(table.stripeCustomerId)
+      .where(sql`${table.stripeCustomerId} is not null`),
+    uniqueIndex("organizations_stripe_subscription_unique")
+      .on(table.stripeSubscriptionId)
+      .where(sql`${table.stripeSubscriptionId} is not null`),
+  ],
+);
 
 export const users = pgTable("users", {
   id: uuid("id").defaultRandom().primaryKey(),

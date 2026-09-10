@@ -220,6 +220,90 @@ CREATE UNIQUE INDEX IF NOT EXISTS signal_alerts_org_company_rule_window_unique
   ON signal_alerts (organization_id, company_id, rule, window_start);
 `,
   },
+  {
+    id: "0003_secure_organization_stripe_bindings",
+    sql: `
+CREATE TABLE IF NOT EXISTS archived_organization_stripe_conflicts (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  organization_id uuid NOT NULL,
+  stripe_customer_id text,
+  stripe_subscription_id text,
+  conflict_field text NOT NULL,
+  archived_at timestamp NOT NULL DEFAULT now()
+);
+
+WITH ranked AS (
+  SELECT id, stripe_customer_id,
+    row_number() OVER (
+      PARTITION BY stripe_customer_id
+      ORDER BY created_at ASC, id ASC
+    ) AS conflict_rank
+  FROM organizations
+  WHERE stripe_customer_id IS NOT NULL
+)
+INSERT INTO archived_organization_stripe_conflicts (
+  organization_id, stripe_customer_id, stripe_subscription_id, conflict_field
+)
+SELECT organization.id, organization.stripe_customer_id,
+  organization.stripe_subscription_id, 'stripe_customer_id'
+FROM organizations organization
+JOIN ranked ON ranked.id = organization.id
+WHERE ranked.conflict_rank > 1;
+
+WITH ranked AS (
+  SELECT id, stripe_customer_id,
+    row_number() OVER (
+      PARTITION BY stripe_customer_id
+      ORDER BY created_at ASC, id ASC
+    ) AS conflict_rank
+  FROM organizations
+  WHERE stripe_customer_id IS NOT NULL
+)
+UPDATE organizations organization
+SET stripe_customer_id = NULL
+FROM ranked
+WHERE organization.id = ranked.id AND ranked.conflict_rank > 1;
+
+WITH ranked AS (
+  SELECT id, stripe_subscription_id,
+    row_number() OVER (
+      PARTITION BY stripe_subscription_id
+      ORDER BY created_at ASC, id ASC
+    ) AS conflict_rank
+  FROM organizations
+  WHERE stripe_subscription_id IS NOT NULL
+)
+INSERT INTO archived_organization_stripe_conflicts (
+  organization_id, stripe_customer_id, stripe_subscription_id, conflict_field
+)
+SELECT organization.id, organization.stripe_customer_id,
+  organization.stripe_subscription_id, 'stripe_subscription_id'
+FROM organizations organization
+JOIN ranked ON ranked.id = organization.id
+WHERE ranked.conflict_rank > 1;
+
+WITH ranked AS (
+  SELECT id, stripe_subscription_id,
+    row_number() OVER (
+      PARTITION BY stripe_subscription_id
+      ORDER BY created_at ASC, id ASC
+    ) AS conflict_rank
+  FROM organizations
+  WHERE stripe_subscription_id IS NOT NULL
+)
+UPDATE organizations organization
+SET stripe_subscription_id = NULL
+FROM ranked
+WHERE organization.id = ranked.id AND ranked.conflict_rank > 1;
+
+CREATE UNIQUE INDEX IF NOT EXISTS organizations_stripe_customer_unique
+  ON organizations (stripe_customer_id)
+  WHERE stripe_customer_id IS NOT NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS organizations_stripe_subscription_unique
+  ON organizations (stripe_subscription_id)
+  WHERE stripe_subscription_id IS NOT NULL;
+`,
+  },
 ];
 
 export async function runApplicationMigrations(pool: Pool) {

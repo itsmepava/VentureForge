@@ -5,8 +5,14 @@ import router from "./routes";
 import { logger } from "./lib/logger";
 import { WebhookHandlers } from "./lib/webhookHandlers";
 import { db, organizations } from "@workspace/db";
-import { eq } from "drizzle-orm";
-import { DEMO_ORGANIZATION_ID, ensureDemoData } from "./lib/demo-data";
+import { and, eq, isNull, or } from "drizzle-orm";
+import {
+  normalizeStripeSubscriptionEvent,
+  parseStripeSubscriptionEvent,
+  resolveStripeSubscriptionOrganization,
+  type StripeSubscriptionEvent,
+} from "./lib/stripe-subscription-events";
+import { getUncachableStripeClient } from "./lib/stripeClient";
 
 const app: Express = express();
 
@@ -40,7 +46,19 @@ app.post(
     try {
       const sig = Array.isArray(signature) ? signature[0] : signature;
       await WebhookHandlers.processWebhook(req.body as Buffer, sig);
-      await syncOrganizationSubscription(req.body as Buffer);
+      const webhookSubscription = parseStripeSubscriptionEvent(req.body as Buffer);
+      if (webhookSubscription) {
+        const stripe = await getUncachableStripeClient();
+        const canonical = await stripe.subscriptions.retrieve(webhookSubscription.subscriptionId);
+        const canonicalEvent = normalizeStripeSubscriptionEvent(
+          canonical.status === "canceled"
+            ? "customer.subscription.deleted"
+            : "customer.subscription.updated",
+          canonical,
+        );
+        if (!canonicalEvent) throw new Error("Stripe returned an invalid subscription");
+        await syncOrganizationSubscription(canonicalEvent);
+      }
       return res.status(200).json({ received: true });
     } catch (error) {
       req.log.error({ err: error }, "Stripe webhook processing failed");
@@ -54,35 +72,76 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use("/api", router);
 
-async function syncOrganizationSubscription(payload: Buffer) {
-  const event = JSON.parse(payload.toString("utf8")) as {
-    type?: string;
-    data?: { object?: { id?: string; customer?: string; status?: string; metadata?: { organizationId?: string } } };
-  };
-  if (
-    event.type !== "customer.subscription.created" &&
-    event.type !== "customer.subscription.updated" &&
-    event.type !== "customer.subscription.deleted"
-  ) {
+async function syncOrganizationSubscription(subscription: StripeSubscriptionEvent) {
+  const candidates = await db
+    .select()
+    .from(organizations)
+    .where(
+      or(
+        subscription.organizationId
+          ? eq(organizations.id, subscription.organizationId)
+          : undefined,
+        eq(organizations.stripeSubscriptionId, subscription.subscriptionId),
+        eq(organizations.stripeCustomerId, subscription.customerId),
+      ),
+    );
+  const resolution = resolveStripeSubscriptionOrganization(subscription, candidates);
+  if (resolution.action === "ignore" && resolution.reason === "unlinked") {
+    logger.warn(
+      {
+        customerId: subscription.customerId,
+        subscriptionId: subscription.subscriptionId,
+      },
+      "Ignoring Stripe subscription event that is not linked to an organization",
+    );
     return;
   }
-  await ensureDemoData();
-  const subscription = event.data?.object;
-  const organizationId = subscription?.metadata?.organizationId ?? DEMO_ORGANIZATION_ID;
-  const status =
-    event.type === "customer.subscription.deleted"
-      ? "canceled"
-      : subscription?.status === "past_due"
-        ? "past_due"
-        : "active";
-  await db
+  if (resolution.action === "ignore") {
+    logger.info(
+      {
+        organizationId: resolution.organization.id,
+        subscriptionId: subscription.subscriptionId,
+      },
+      "Ignoring stale Stripe subscription deletion",
+    );
+    return;
+  }
+  const organization = resolution.organization;
+  const updated = await db
     .update(organizations)
     .set({
-      stripeCustomerId: subscription?.customer ?? undefined,
-      stripeSubscriptionId: event.type === "customer.subscription.deleted" ? null : (subscription?.id ?? null),
-      subscriptionStatus: status,
+      stripeCustomerId: subscription.customerId,
+      stripeSubscriptionId:
+        subscription.eventType === "customer.subscription.deleted"
+          ? null
+          : subscription.subscriptionId,
+      subscriptionStatus: subscription.status,
     })
-    .where(eq(organizations.id, organizationId));
+    .where(
+      and(
+        eq(organizations.id, organization.id),
+        organization.stripeCustomerId
+          ? eq(organizations.stripeCustomerId, organization.stripeCustomerId)
+          : isNull(organizations.stripeCustomerId),
+        organization.stripeSubscriptionId
+          ? eq(organizations.stripeSubscriptionId, organization.stripeSubscriptionId)
+          : isNull(organizations.stripeSubscriptionId),
+      ),
+    )
+    .returning({ id: organizations.id });
+  if (!updated.length) {
+    if (subscription.eventType === "customer.subscription.deleted") {
+      logger.info(
+        {
+          organizationId: organization.id,
+          subscriptionId: subscription.subscriptionId,
+        },
+        "Ignoring Stripe deletion after the organization binding changed",
+      );
+      return;
+    }
+    throw new Error("Organization Stripe binding changed concurrently");
+  }
 }
 
 export default app;
