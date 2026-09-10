@@ -9,7 +9,7 @@
     "start": "node --enable-source-maps ./dist/index.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "node --experimental-strip-types --test src/lib/*.test.ts",
-    "test:integration": "pnpm run build && node --test src/integration/*.test.mjs"
+    "test:integration": "pnpm run build && node --experimental-strip-types --test src/integration/*.test.mjs"
   },
   "dependencies": {
     "@workspace/api-zod": "workspace:*",

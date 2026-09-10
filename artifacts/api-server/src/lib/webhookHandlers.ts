@@ -1,4 +1,4 @@
-import { getStripeSync } from "./stripeClient";
+import { getStripeSync } from "./stripeClient.ts";
 
 export class WebhookHandlers {
   static async processWebhook(payload: Buffer, signature: string) {
