@@ -10,8 +10,13 @@
   },
   "private": true,
   "dependencies": {
+    "@fontsource/noto-sans": "^5.3.0",
+    "@fontsource/noto-sans-kr": "^5.3.0",
+    "@fontsource/noto-sans-sinhala": "^5.3.0",
     "@replit/connectors-sdk": "^0.4.1",
+    "@types/pdfkit": "^0.17.6",
     "fernet": "^0.3.3",
+    "pdfkit": "^0.20.2",
     "stripe": "^22.6.1",
     "stripe-replit-sync": "^1.0.0"
   },

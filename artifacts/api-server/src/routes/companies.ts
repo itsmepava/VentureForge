@@ -80,7 +80,7 @@ router.get("/companies/export.pdf", async (req, res, next) => {
     const companies = await listFilteredCompanies(req.query as Record<string, unknown>);
     res.setHeader("Content-Type", "application/pdf");
     res.setHeader("Content-Disposition", 'attachment; filename="ventureforge-companies.pdf"');
-    return res.send(companiesToPdf(companies));
+    return res.send(await companiesToPdf(companies));
   } catch (error) {
     return next(error);
   }

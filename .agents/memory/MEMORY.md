@@ -1,2 +1,3 @@
 - [Native TypeScript test boundaries](native-ts-test-boundaries.md) — keep Node strip-types tests on pure modules; workspace DB imports use resolution patterns Node cannot load directly.
 - [Application migration safety](application-migration-safety.md) — migrations run before listen, serialize replicas, and archive conflicts before tightening uniqueness.
+- [Mixed-script PDF rendering](mixed-script-pdf-rendering.md) — keep script runs on explicit baselines; joiners and combining marks inherit their preceding font.
