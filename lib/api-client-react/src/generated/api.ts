@@ -27,6 +27,8 @@ import type {
   DiscoveredCompany,
   ExportCompaniesCsvParams,
   ExportCompaniesPdfParams,
+  GitHubRepository,
+  GitHubRepositoryInput,
   HealthStatus,
   IntegrationConnection,
   IntegrationDeliveryInput,
@@ -651,6 +653,228 @@ export function useExportCompaniesPdf<TData = Awaited<ReturnType<typeof exportCo
 
 
 
+
+export const getListCompanyGitHubRepositoriesUrl = (companyId: string,) => {
+
+
+
+
+  return `/api/companies/${companyId}/github-repositories`
+}
+
+/**
+ * @summary List verified GitHub repositories for a company
+ */
+export const listCompanyGitHubRepositories = async (companyId: string, options?: Parameters<typeof customFetch>[1]): Promise<GitHubRepository[]> => {
+
+  return customFetch<GitHubRepository[]>(getListCompanyGitHubRepositoriesUrl(companyId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListCompanyGitHubRepositoriesQueryKey = (companyId: string,) => {
+    return [
+    `/api/companies/${companyId}/github-repositories`
+    ] as const;
+    }
+
+
+export const getListCompanyGitHubRepositoriesQueryOptions = <TData = Awaited<ReturnType<typeof listCompanyGitHubRepositories>>, TError = ErrorType<void>>(companyId: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listCompanyGitHubRepositories>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListCompanyGitHubRepositoriesQueryKey(companyId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listCompanyGitHubRepositories>>> = ({ signal }) => listCompanyGitHubRepositories(companyId, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: companyId !== null && companyId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listCompanyGitHubRepositories>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListCompanyGitHubRepositoriesQueryResult = NonNullable<Awaited<ReturnType<typeof listCompanyGitHubRepositories>>>
+export type ListCompanyGitHubRepositoriesQueryError = ErrorType<void>
+
+
+/**
+ * @summary List verified GitHub repositories for a company
+ */
+
+export function useListCompanyGitHubRepositories<TData = Awaited<ReturnType<typeof listCompanyGitHubRepositories>>, TError = ErrorType<void>>(
+ companyId: string, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listCompanyGitHubRepositories>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListCompanyGitHubRepositoriesQueryOptions(companyId,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getAddCompanyGitHubRepositoryUrl = (companyId: string,) => {
+
+
+
+
+  return `/api/companies/${companyId}/github-repositories`
+}
+
+/**
+ * @summary Verify and add a GitHub repository mapping
+ */
+export const addCompanyGitHubRepository = async (companyId: string,
+    gitHubRepositoryInput: GitHubRepositoryInput, options?: Parameters<typeof customFetch>[1]): Promise<GitHubRepository> => {
+
+  return customFetch<GitHubRepository>(getAddCompanyGitHubRepositoryUrl(companyId),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(gitHubRepositoryInput)
+  }
+);}
+
+
+
+
+
+export const getAddCompanyGitHubRepositoryMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof addCompanyGitHubRepository>>, TError,{companyId: string;data: BodyType<GitHubRepositoryInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof addCompanyGitHubRepository>>, TError,{companyId: string;data: BodyType<GitHubRepositoryInput>}, TContext> => {
+
+const mutationKey = ['addCompanyGitHubRepository'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof addCompanyGitHubRepository>>, {companyId: string;data: BodyType<GitHubRepositoryInput>}> = (props) => {
+          const {companyId,data} = props ?? {};
+
+          return  addCompanyGitHubRepository(companyId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AddCompanyGitHubRepositoryMutationResult = NonNullable<Awaited<ReturnType<typeof addCompanyGitHubRepository>>>
+    export type AddCompanyGitHubRepositoryMutationBody = BodyType<GitHubRepositoryInput>
+    export type AddCompanyGitHubRepositoryMutationError = ErrorType<void>
+
+    /**
+ * @summary Verify and add a GitHub repository mapping
+ */
+export const useAddCompanyGitHubRepository = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof addCompanyGitHubRepository>>, TError,{companyId: string;data: BodyType<GitHubRepositoryInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof addCompanyGitHubRepository>>,
+        TError,
+        {companyId: string;data: BodyType<GitHubRepositoryInput>},
+        TContext
+      > => {
+      return useMutation(getAddCompanyGitHubRepositoryMutationOptions(options));
+    }
+
+export const getDeleteCompanyGitHubRepositoryUrl = (companyId: string,
+    repositoryId: string,) => {
+
+
+
+
+  return `/api/companies/${companyId}/github-repositories/${repositoryId}`
+}
+
+/**
+ * @summary Remove a GitHub repository mapping
+ */
+export const deleteCompanyGitHubRepository = async (companyId: string,
+    repositoryId: string, options?: Parameters<typeof customFetch>[1]): Promise<void> => {
+
+  return customFetch<void>(getDeleteCompanyGitHubRepositoryUrl(companyId,repositoryId),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getDeleteCompanyGitHubRepositoryMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteCompanyGitHubRepository>>, TError,{companyId: string;repositoryId: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteCompanyGitHubRepository>>, TError,{companyId: string;repositoryId: string}, TContext> => {
+
+const mutationKey = ['deleteCompanyGitHubRepository'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteCompanyGitHubRepository>>, {companyId: string;repositoryId: string}> = (props) => {
+          const {companyId,repositoryId} = props ?? {};
+
+          return  deleteCompanyGitHubRepository(companyId,repositoryId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteCompanyGitHubRepositoryMutationResult = NonNullable<Awaited<ReturnType<typeof deleteCompanyGitHubRepository>>>
+
+    export type DeleteCompanyGitHubRepositoryMutationError = ErrorType<void>
+
+    /**
+ * @summary Remove a GitHub repository mapping
+ */
+export const useDeleteCompanyGitHubRepository = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteCompanyGitHubRepository>>, TError,{companyId: string;repositoryId: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof deleteCompanyGitHubRepository>>,
+        TError,
+        {companyId: string;repositoryId: string},
+        TContext
+      > => {
+      return useMutation(getDeleteCompanyGitHubRepositoryMutationOptions(options));
+    }
 
 export const getListSavedSearchesUrl = () => {
 

@@ -179,6 +179,21 @@ export const ProviderName = {
   slack: 'slack',
 } as const;
 
+export interface GitHubRepository {
+  id: string;
+  companyId: string;
+  repository: string;
+  verified: boolean;
+  /** @nullable */
+  verifiedAt: string | null;
+  createdAt: string;
+}
+
+export interface GitHubRepositoryInput {
+  /** @pattern ^[^/\s]+/[^/\s]+$ */
+  repository: string;
+}
+
 export type IntegrationConnectionCategory = typeof IntegrationConnectionCategory[keyof typeof IntegrationConnectionCategory];
 
 

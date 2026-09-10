@@ -172,6 +172,59 @@ export const ExportCompaniesPdfResponse = zod.unknown()
 
 
 /**
+ * @summary List verified GitHub repositories for a company
+ */
+export const ListCompanyGitHubRepositoriesParams = zod.object({
+  "companyId": zod.coerce.string()
+})
+
+export const ListCompanyGitHubRepositoriesResponseItem = zod.object({
+  "id": zod.string(),
+  "companyId": zod.string(),
+  "repository": zod.string(),
+  "verified": zod.boolean(),
+  "verifiedAt": zod.string().nullable(),
+  "createdAt": zod.string()
+})
+export const ListCompanyGitHubRepositoriesResponse = zod.array(ListCompanyGitHubRepositoriesResponseItem)
+
+
+/**
+ * @summary Verify and add a GitHub repository mapping
+ */
+export const AddCompanyGitHubRepositoryParams = zod.object({
+  "companyId": zod.coerce.string()
+})
+
+export const addCompanyGitHubRepositoryBodyRepositoryRegExp = new RegExp('^[^/\\s]+/[^/\\s]+$');
+
+
+export const AddCompanyGitHubRepositoryBody = zod.object({
+  "repository": zod.string().regex(addCompanyGitHubRepositoryBodyRepositoryRegExp)
+})
+
+export const AddCompanyGitHubRepositoryResponse = zod.object({
+  "id": zod.string(),
+  "companyId": zod.string(),
+  "repository": zod.string(),
+  "verified": zod.boolean(),
+  "verifiedAt": zod.string().nullable(),
+  "createdAt": zod.string()
+})
+
+
+/**
+ * @summary Remove a GitHub repository mapping
+ */
+export const DeleteCompanyGitHubRepositoryParams = zod.object({
+  "companyId": zod.coerce.string(),
+  "repositoryId": zod.coerce.string()
+})
+
+export const DeleteCompanyGitHubRepositoryResponse = zod.void()
+
+
+/**
  * @summary List saved searches
  */
 export const ListSavedSearchesResponseItem = zod.object({

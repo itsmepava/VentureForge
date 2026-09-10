@@ -24,6 +24,8 @@ export * from './exportCompaniesCsvParams';
 export * from './exportCompaniesPdfParams';
 export * from './filterParams';
 export * from './founder';
+export * from './gitHubRepository';
+export * from './gitHubRepositoryInput';
 export * from './healthStatus';
 export * from './integrationConnection';
 export * from './integrationConnectionCategory';

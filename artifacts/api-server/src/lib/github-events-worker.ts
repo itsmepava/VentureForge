@@ -1,6 +1,7 @@
 import { and, eq, gte, lt } from "drizzle-orm";
 import {
   db,
+  companyGithubRepositories,
   discoveredCompanies,
   githubEventSnapshots,
   signalAlerts,
@@ -8,6 +9,7 @@ import {
 import { DEMO_ORGANIZATION_ID, ensureDemoData } from "./demo-data";
 import { logger } from "./logger";
 import { readProviderValues } from "./providers";
+import { repositoryMatchesCompany } from "./github-repository-matching";
 import {
   calculateWeekendBaseline,
   percentageChangeFromBaseline,
@@ -29,23 +31,6 @@ function weekendWindow(now: Date) {
   const end = new Date(start);
   end.setUTCDate(end.getUTCDate() + 3);
   return { start, end };
-}
-
-function compact(value: string) {
-  return value.toLowerCase().replace(/[^a-z0-9]/g, "");
-}
-
-function eventMatchesCompany(event: GitHubEvent, company: typeof discoveredCompanies.$inferSelect) {
-  const repository = compact(event.repo?.name ?? "");
-  if (!repository) return false;
-  const companyName = compact(company.companyName);
-  let websiteHost = "";
-  try {
-    websiteHost = compact(new URL(company.website).hostname.replace(/^www\./, "").split(".")[0] ?? "");
-  } catch {
-    websiteHost = "";
-  }
-  return repository.includes(companyName) || Boolean(websiteHost && repository.includes(websiteHost));
 }
 
 async function fetchGitHubEvents(token: string) {
@@ -79,12 +64,28 @@ export async function runGitHubEventsScan(now = new Date()) {
 
   const events = await fetchGitHubEvents(token);
   const { start, end } = weekendWindow(now);
-  const [companies] = await Promise.all([
+  const [companies, repositoryMappings] = await Promise.all([
     db
       .select()
       .from(discoveredCompanies)
       .where(eq(discoveredCompanies.organizationId, DEMO_ORGANIZATION_ID)),
+    db
+      .select()
+      .from(companyGithubRepositories)
+      .where(
+        and(
+          eq(companyGithubRepositories.organizationId, DEMO_ORGANIZATION_ID),
+          eq(companyGithubRepositories.verified, true),
+        ),
+      ),
   ]);
+  const repositoriesByCompany = new Map<string, string[]>();
+  for (const mapping of repositoryMappings) {
+    repositoriesByCompany.set(mapping.companyId, [
+      ...(repositoriesByCompany.get(mapping.companyId) ?? []),
+      mapping.repository,
+    ]);
+  }
   const commitsByCompany = new Map<string, { commits: number; events: number }>();
   for (const event of events) {
     if (event.type !== "PushEvent" || !event.created_at) continue;
@@ -92,7 +93,7 @@ export async function runGitHubEventsScan(now = new Date()) {
     if (createdAt < start || createdAt >= end) continue;
     const commitCount = Math.max(1, event.payload?.commits?.length ?? 0);
     for (const company of companies) {
-      if (!eventMatchesCompany(event, company)) continue;
+      if (!repositoryMatchesCompany(event.repo?.name ?? "", company, repositoriesByCompany.get(company.id) ?? [])) continue;
       const current = commitsByCompany.get(company.id) ?? { commits: 0, events: 0 };
       current.commits += commitCount;
       current.events += 1;
