@@ -1,4 +1,4 @@
-import { and, eq } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { Router, type IRouter } from "express";
 import {
   AddCompanyGitHubRepositoryBody,
@@ -151,18 +151,6 @@ router.post("/companies/:companyId/github-repositories", async (req, res, next) 
     if (!response.ok) return res.status(400).json({ error: "GitHub could not verify that repository" });
     const verifiedRepository = (await response.json()) as { full_name?: string };
     const canonicalName = verifiedRepository.full_name ?? repository;
-    const [existing] = await db
-      .select()
-      .from(companyGithubRepositories)
-      .where(
-        and(
-          eq(companyGithubRepositories.organizationId, DEMO_ORGANIZATION_ID),
-          eq(companyGithubRepositories.companyId, companyId),
-          eq(companyGithubRepositories.repository, canonicalName),
-        ),
-      )
-      .limit(1);
-    if (existing) return res.status(201).json(AddCompanyGitHubRepositoryResponse.parse(serializeRepository(existing)));
     const now = new Date();
     const [created] = await db
       .insert(companyGithubRepositories)
@@ -173,8 +161,24 @@ router.post("/companies/:companyId/github-repositories", async (req, res, next) 
         verified: true,
         verifiedAt: now,
       })
+      .onConflictDoNothing()
       .returning();
-    return res.status(201).json(AddCompanyGitHubRepositoryResponse.parse(serializeRepository(created)));
+    if (created) {
+      return res.status(201).json(AddCompanyGitHubRepositoryResponse.parse(serializeRepository(created)));
+    }
+    const [existing] = await db
+      .select()
+      .from(companyGithubRepositories)
+      .where(
+        and(
+          eq(companyGithubRepositories.organizationId, DEMO_ORGANIZATION_ID),
+          eq(companyGithubRepositories.companyId, companyId),
+          sql`lower(${companyGithubRepositories.repository}) = lower(${canonicalName})`,
+        ),
+      )
+      .limit(1);
+    if (!existing) return res.status(409).json({ error: "Repository mapping already exists" });
+    return res.status(201).json(AddCompanyGitHubRepositoryResponse.parse(serializeRepository(existing)));
   } catch (error) {
     return next(error);
   }
