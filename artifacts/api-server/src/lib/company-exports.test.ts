@@ -73,25 +73,53 @@ test("CSV exports neutralize spreadsheet formulas", () => {
   assert.match(csv, /"'=HYPERLINK\(""https:\/\/malicious\.example""\)"/);
 });
 
-test("PDF exports route Sinhala, Korean, and accented Latin text to embedded fonts", async () => {
-  const company = {
-    ...companies[0],
-    companyName: "Café ලංකා 서울벤처스",
-    regionalMetadata: {
-      ...companies[0].regionalMetadata,
-      sector: "Fintech මූල්‍ය 금융",
-      specificCountry: "ශ්‍රී ලංකාව · 대한민국",
-    },
-  };
-  const runs = splitPdfFontRuns(company.companyName);
-  assert.ok(runs.some((run) => run.font === "latin" && run.text.includes("Café")));
-  assert.ok(runs.some((run) => run.font === "sinhala" && run.text.includes("ලංකා")));
-  assert.ok(runs.some((run) => run.font === "korean" && run.text.includes("서울벤처스")));
+test("PDF exports route every target-market script to an embedded font", async () => {
+  const scriptSamples = [
+    { font: "latin", text: "Café Ventures" },
+    { font: "sinhala", text: "ලංකා වෙන්චර්ස්" },
+    { font: "tamil", text: "சென்னை முயற்சி" },
+    { font: "devanagari", text: "मुंबई वेंचर्स" },
+    { font: "bengali", text: "বাংলা উদ্যোগ" },
+    { font: "arabic", text: "شركة الرياض" },
+    { font: "thai", text: "กรุงเทพ เวนเจอร์" },
+    { font: "chinese", text: "公司（北京）", hanFont: "chinese" },
+    { font: "japanese", text: "株式会社【東京】", hanFont: "japanese" },
+    { font: "korean", text: "서울벤처스" },
+  ] as const;
+  for (const sample of scriptSamples) {
+    const runs = splitPdfFontRuns(sample.text, "hanFont" in sample ? sample.hanFont : undefined);
+    assert.ok(
+      runs.some((run) => run.font === sample.font && run.text.includes(sample.text.split(" ")[0])),
+      `${sample.font} text was not routed to its expected font`,
+    );
+    if (sample.font === "chinese" || sample.font === "japanese") {
+      assert.ok(
+        runs.every((run) => run.font === sample.font),
+        `${sample.font} punctuation did not inherit the CJK font`,
+      );
+    }
+    if (sample.font === "arabic") {
+      assert.deepEqual(runs, [{ font: "arabic", text: sample.text }]);
+    }
+  }
 
-  const pdf = await companiesToPdf([company]);
+  const pdf = await companiesToPdf(
+    scriptSamples.map((sample) => ({
+      ...companies[0],
+      companyName: sample.text,
+      regionalMetadata: {
+        ...companies[0].regionalMetadata,
+        specificCountry: sample.font === "japanese"
+          ? "Japan"
+          : sample.font === "chinese"
+            ? "China"
+            : companies[0].regionalMetadata.specificCountry,
+      },
+    })),
+  );
   const source = pdf.toString("latin1");
   assert.match(source, /^%PDF-1\.4/);
-  assert.ok((source.match(/\/ToUnicode/g) ?? []).length >= 3);
+  assert.ok((source.match(/\/ToUnicode/g) ?? []).length >= scriptSamples.length);
 });
 
 test("PDF exports preserve 42 company rows per page", async () => {

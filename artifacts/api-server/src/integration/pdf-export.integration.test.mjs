@@ -49,16 +49,20 @@ async function parsePdf(buffer) {
     useWorkerFetch: false,
   }).promise;
   const pages = [];
+  const textItems = [];
   for (let pageNumber = 1; pageNumber <= document.numPages; pageNumber += 1) {
     const page = await document.getPage(pageNumber);
     const content = await page.getTextContent();
+    for (const item of content.items) {
+      if ("str" in item) textItems.push({ direction: item.dir, text: item.str });
+    }
     pages.push(content.items.map((item) => ("str" in item ? item.str : "")).join(" "));
   }
-  return { pageCount: document.numPages, text: pages.join("\n") };
+  return { pageCount: document.numPages, text: pages.join("\n"), textItems };
 }
 
 function compactText(value) {
-  return value.replace(/[\s\u200c\u200d]+/gu, "");
+  return value.replace(/[\s\p{Cc}\p{Cf}]+/gu, "");
 }
 
 test("PDF download preserves filters, Unicode text, headers, empty results, and pagination", async (context) => {
@@ -146,8 +150,36 @@ test("PDF download preserves filters, Unicode text, headers, empty results, and 
   };
 
   const filterToken = `filter-${randomUUID()}`;
-  const internationalName = "Café ලංකා 서울벤처스";
-  await insertCompany({ companyName: internationalName, searchToken: filterToken, score: 99 });
+  const internationalCompanies = [
+    { companyName: "Café Ventures" },
+    { companyName: "ලංකා වෙන්චර්ස්" },
+    { companyName: "சென்னை முயற்சி" },
+    { companyName: "मुंबई वेंचर्स" },
+    { companyName: "বাংলা উদ্যোগ" },
+    { companyName: "شركة الرياض" },
+    { companyName: "กรุงเทพ เวนเจอร์" },
+    { companyName: "公司（北京）", country: "China" },
+    { companyName: "株式会社【東京】", country: "Japan" },
+    { companyName: "日本銀行", country: "Japan" },
+    { companyName: "서울벤처스" },
+  ];
+  const extractionAnchors = [
+    "Café Ventures",
+    "ලංකා",
+    "முயற்சி",
+    "मुंबई",
+    "বাংলা",
+    "الرياض",
+    "กรุงเทพ",
+    "公司（北京）",
+    "株式会社【東京】",
+    "日本銀行",
+    "서울벤처스",
+  ];
+  await Promise.all(
+    internationalCompanies.map(({ companyName, country }, index) =>
+      insertCompany({ companyName, country, searchToken: filterToken, score: 99 - index })),
+  );
   await insertCompany({
     companyName: "Excluded Health Company",
     searchToken: filterToken,
@@ -158,7 +190,9 @@ test("PDF download preserves filters, Unicode text, headers, empty results, and 
   const filteredUrl = new URL("/api/companies/export.pdf", baseUrl);
   filteredUrl.searchParams.set("search", filterToken);
   filteredUrl.searchParams.set("region", "South Asia");
-  filteredUrl.searchParams.set("country", "Sri Lanka");
+  filteredUrl.searchParams.append("country", "Sri Lanka");
+  filteredUrl.searchParams.append("country", "China");
+  filteredUrl.searchParams.append("country", "Japan");
   filteredUrl.searchParams.set("stage", "Seed");
   filteredUrl.searchParams.set("businessModel", "B2B");
   filteredUrl.searchParams.set("sector", "Fintech");
@@ -172,9 +206,21 @@ test("PDF download preserves filters, Unicode text, headers, empty results, and 
   const filteredPdf = await parsePdf(await filteredResponse.arrayBuffer());
   const filteredText = compactText(filteredPdf.text);
   assert.equal(filteredPdf.pageCount, 1);
-  assert.ok(filteredText.includes(compactText("Café")));
-  assert.ok(filteredText.includes(compactText("ලංකා")));
-  assert.ok(filteredText.includes(compactText("서울벤처스")));
+  for (const anchor of extractionAnchors) {
+    assert.ok(
+      filteredText.includes(compactText(anchor)),
+      `PDF.js could not recover ${anchor}`,
+    );
+  }
+  assert.ok(
+    filteredPdf.textItems.some(
+      (item) =>
+        item.direction === "rtl"
+        && compactText(item.text).includes(compactText("شركة"))
+        && compactText(item.text).includes(compactText("الرياض")),
+    ),
+    "Arabic company name was not rendered as one right-to-left phrase",
+  );
   assert.ok(!filteredText.includes(compactText("Excluded Health Company")));
 
   const emptyUrl = new URL("/api/companies/export.pdf", baseUrl);
