@@ -1,0 +1,846 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: VentureForge investment sourcing API
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: dashboard
+    description: Sourcing dashboard summaries and activity
+  - name: companies
+    description: Enriched company discovery records
+  - name: saved-searches
+    description: Saved sourcing filters
+  - name: portfolio
+    description: Portfolio source ingestion
+  - name: integrations
+    description: Protected provider connections and delivery destinations
+  - name: billing
+    description: Stripe subscription status and billing portal
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      description: Returns server health status
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+  /dashboard/summary:
+    get:
+      operationId: getDashboardSummary
+      tags: [dashboard]
+      summary: Get sourcing dashboard summary
+      responses:
+        "200":
+          description: Dashboard summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardSummary"
+  /dashboard/activity:
+    get:
+      operationId: getDashboardActivity
+      tags: [dashboard]
+      summary: Get recent sourcing activity
+      responses:
+        "200":
+          description: Recent activity
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ActivityItem"
+  /companies:
+    get:
+      operationId: listCompanies
+      tags: [companies]
+      summary: List enriched company records
+      parameters:
+        - $ref: "#/components/parameters/SearchQuery"
+        - $ref: "#/components/parameters/RegionQuery"
+        - $ref: "#/components/parameters/CountryQuery"
+        - $ref: "#/components/parameters/StageQuery"
+        - $ref: "#/components/parameters/BusinessModelQuery"
+        - $ref: "#/components/parameters/SectorQuery"
+      responses:
+        "200":
+          description: Filtered company records
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DiscoveredCompany"
+  /companies/{companyId}:
+    get:
+      operationId: getCompany
+      tags: [companies]
+      summary: Get a company profile
+      parameters:
+        - $ref: "#/components/parameters/CompanyId"
+      responses:
+        "200":
+          description: Company profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DiscoveredCompany"
+        "404":
+          description: Company not found
+  /companies/export.csv:
+    get:
+      operationId: exportCompaniesCsv
+      tags: [companies]
+      summary: Export filtered companies as CSV
+      parameters:
+        - $ref: "#/components/parameters/SearchQuery"
+        - $ref: "#/components/parameters/RegionQuery"
+        - $ref: "#/components/parameters/CountryQuery"
+        - $ref: "#/components/parameters/StageQuery"
+        - $ref: "#/components/parameters/BusinessModelQuery"
+        - $ref: "#/components/parameters/SectorQuery"
+      responses:
+        "200":
+          description: CSV company export
+          content:
+            text/csv:
+              schema:
+                type: string
+                format: binary
+  /companies/export.pdf:
+    get:
+      operationId: exportCompaniesPdf
+      tags: [companies]
+      summary: Export filtered companies as PDF
+      parameters:
+        - $ref: "#/components/parameters/SearchQuery"
+        - $ref: "#/components/parameters/RegionQuery"
+        - $ref: "#/components/parameters/CountryQuery"
+        - $ref: "#/components/parameters/StageQuery"
+        - $ref: "#/components/parameters/BusinessModelQuery"
+        - $ref: "#/components/parameters/SectorQuery"
+      responses:
+        "200":
+          description: PDF company export
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+  /companies/{companyId}/github-repositories:
+    get:
+      operationId: listCompanyGitHubRepositories
+      tags: [companies]
+      summary: List verified GitHub repositories for a company
+      parameters:
+        - $ref: "#/components/parameters/CompanyId"
+      responses:
+        "200":
+          description: Company repository mappings
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/GitHubRepository"
+        "404":
+          description: Company not found
+    post:
+      operationId: addCompanyGitHubRepository
+      tags: [companies]
+      summary: Verify and add a GitHub repository mapping
+      parameters:
+        - $ref: "#/components/parameters/CompanyId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GitHubRepositoryInput"
+      responses:
+        "201":
+          description: Verified repository mapping
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GitHubRepository"
+        "400":
+          description: Repository could not be verified
+        "404":
+          description: Company not found
+        "503":
+          description: GitHub is not connected
+  /companies/{companyId}/github-repositories/{repositoryId}:
+    delete:
+      operationId: deleteCompanyGitHubRepository
+      tags: [companies]
+      summary: Remove a GitHub repository mapping
+      parameters:
+        - $ref: "#/components/parameters/CompanyId"
+        - $ref: "#/components/parameters/RepositoryId"
+      responses:
+        "204":
+          description: Repository mapping removed
+        "404":
+          description: Repository mapping not found
+  /companies/{companyId}/github-repositories/{repositoryId}/verify:
+    post:
+      operationId: verifyCompanyGitHubRepository
+      tags: [companies]
+      summary: Retry GitHub repository access verification
+      parameters:
+        - $ref: "#/components/parameters/CompanyId"
+        - $ref: "#/components/parameters/RepositoryId"
+      responses:
+        "200":
+          description: Updated repository verification state
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GitHubRepository"
+        "404":
+          description: Repository mapping not found
+        "503":
+          description: GitHub is not connected
+  /saved-searches:
+    get:
+      operationId: listSavedSearches
+      tags: [saved-searches]
+      summary: List saved searches
+      responses:
+        "200":
+          description: Saved searches
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SavedSearch"
+    post:
+      operationId: createSavedSearch
+      tags: [saved-searches]
+      summary: Save a sourcing search
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SavedSearchInput"
+      responses:
+        "201":
+          description: Saved search
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SavedSearch"
+  /saved-searches/{searchId}:
+    delete:
+      operationId: deleteSavedSearch
+      tags: [saved-searches]
+      summary: Delete a saved search
+      parameters:
+        - $ref: "#/components/parameters/SearchId"
+      responses:
+        "204":
+          description: Deleted
+        "404":
+          description: Saved search not found
+  /portfolio-sources:
+    get:
+      operationId: listPortfolioSources
+      tags: [portfolio]
+      summary: List portfolio source links
+      responses:
+        "200":
+          description: Portfolio sources
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PortfolioSource"
+    post:
+      operationId: createPortfolioSource
+      tags: [portfolio]
+      summary: Queue a portfolio link for scanning
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PortfolioSourceInput"
+      responses:
+        "201":
+          description: Portfolio source queued
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PortfolioSource"
+  /integrations:
+    get:
+      operationId: listIntegrations
+      tags: [integrations]
+      summary: List provider connection status
+      responses:
+        "200":
+          description: Provider connection status
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/IntegrationConnection"
+  /integrations/{provider}/vault:
+    post:
+      operationId: saveIntegrationVault
+      tags: [integrations]
+      summary: Save encrypted provider values
+      parameters:
+        - $ref: "#/components/parameters/Provider"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/IntegrationVaultInput"
+      responses:
+        "201":
+          description: Saved provider connection
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IntegrationConnection"
+        "400":
+          description: Invalid provider values
+        "503":
+          description: Encryption is not configured
+  /integrations/{provider}:
+    delete:
+      operationId: disconnectIntegration
+      tags: [integrations]
+      summary: Remove organization provider values
+      parameters:
+        - $ref: "#/components/parameters/Provider"
+      responses:
+        "204":
+          description: Disconnected
+  /integrations/{provider}/verify:
+    post:
+      operationId: verifyIntegration
+      tags: [integrations]
+      summary: Verify an encrypted provider connection
+      parameters:
+        - $ref: "#/components/parameters/Provider"
+      responses:
+        "200":
+          description: Verification result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IntegrationVerification"
+        "404":
+          description: Provider is not configured
+  /integrations/{provider}/test-delivery:
+    post:
+      operationId: testIntegrationDelivery
+      tags: [integrations]
+      summary: Send a test delivery to a configured destination
+      parameters:
+        - $ref: "#/components/parameters/Provider"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/IntegrationDeliveryInput"
+      responses:
+        "200":
+          description: Delivery result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IntegrationDeliveryResponse"
+        "404":
+          description: Provider is not configured
+  /billing/status:
+    get:
+      operationId: getBillingStatus
+      tags: [billing]
+      summary: Get organization billing status
+      responses:
+        "200":
+          description: Billing status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BillingStatus"
+  /billing/portal:
+    post:
+      operationId: createBillingPortal
+      tags: [billing]
+      summary: Create a Stripe customer portal session
+      responses:
+        "200":
+          description: Billing portal URL
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BillingPortalResponse"
+        "409":
+          description: Organization has no Stripe customer
+        "503":
+          description: Stripe is not connected
+  /stripe/webhook:
+    post:
+      operationId: stripeWebhook
+      tags: [billing]
+      summary: Receive a signed Stripe webhook
+      responses:
+        "200":
+          description: Webhook accepted
+        "400":
+          description: Invalid signature or payload
+components:
+  parameters:
+    CompanyId:
+      name: companyId
+      in: path
+      required: true
+      schema:
+        type: string
+    SearchId:
+      name: searchId
+      in: path
+      required: true
+      schema:
+        type: string
+    RepositoryId:
+      name: repositoryId
+      in: path
+      required: true
+      schema:
+        type: string
+    Provider:
+      name: provider
+      in: path
+      required: true
+      schema:
+        $ref: "#/components/schemas/ProviderName"
+    SearchQuery:
+      name: search
+      in: query
+      required: false
+      schema:
+        type: string
+    RegionQuery:
+      name: region
+      in: query
+      required: false
+      schema:
+        type: array
+        items:
+          type: string
+      style: form
+      explode: true
+    CountryQuery:
+      name: country
+      in: query
+      required: false
+      schema:
+        type: array
+        items:
+          type: string
+      style: form
+      explode: true
+    StageQuery:
+      name: stage
+      in: query
+      required: false
+      schema:
+        type: array
+        items:
+          type: string
+      style: form
+      explode: true
+    BusinessModelQuery:
+      name: businessModel
+      in: query
+      required: false
+      schema:
+        type: array
+        items:
+          type: string
+      style: form
+      explode: true
+    SectorQuery:
+      name: sector
+      in: query
+      required: false
+      schema:
+        type: array
+        items:
+          type: string
+      style: form
+      explode: true
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+    DashboardSummary:
+      type: object
+      properties:
+        companyCount:
+          type: number
+        newThisWeek:
+          type: number
+        highSignalCount:
+          type: number
+        trackedDevelopers:
+          type: number
+        activeRegions:
+          type: number
+        weeklyDiscovery:
+          type: array
+          items:
+            $ref: "#/components/schemas/TrendPoint"
+        regionBreakdown:
+          type: array
+          items:
+            $ref: "#/components/schemas/RegionCount"
+      required:
+        - companyCount
+        - newThisWeek
+        - highSignalCount
+        - trackedDevelopers
+        - activeRegions
+        - weeklyDiscovery
+        - regionBreakdown
+    TrendPoint:
+      type: object
+      properties:
+        label:
+          type: string
+        value:
+          type: number
+      required: [label, value]
+    RegionCount:
+      type: object
+      properties:
+        region:
+          type: string
+        count:
+          type: number
+        percentage:
+          type: number
+      required: [region, count, percentage]
+    ActivityItem:
+      type: object
+      properties:
+        id:
+          type: string
+        kind:
+          type: string
+          enum: [company, alert, scan, developer]
+        title:
+          type: string
+        description:
+          type: string
+        timestamp:
+          type: string
+        companyId:
+          type: ["string", "null"]
+        severity:
+          type: ["string", "null"]
+          enum: [high, medium, low, null]
+      required: [id, kind, title, description, timestamp, companyId, severity]
+    Founder:
+      type: object
+      properties:
+        name:
+          type: string
+        title:
+          type: string
+        linkedinHandle:
+          type: ["string", "null"]
+      required: [name, title, linkedinHandle]
+    BehavioralMetrics:
+      type: object
+      properties:
+        builderResilienceScore:
+          type: number
+        problemSolvingNotes:
+          type: string
+        commitVelocitySpike:
+          type: number
+      required: [builderResilienceScore, problemSolvingNotes, commitVelocitySpike]
+    RegionalMetadata:
+      type: object
+      properties:
+        geographyRegion:
+          type: string
+        specificCountry:
+          type: string
+        businessModel:
+          type: string
+        sector:
+          type: string
+        employeeCount:
+          type: number
+      required: [geographyRegion, specificCountry, businessModel, sector, employeeCount]
+    DiscoveredCompany:
+      type: object
+      properties:
+        id:
+          type: string
+        companyName:
+          type: string
+        website:
+          type: string
+        foundersList:
+          type: array
+          items:
+            $ref: "#/components/schemas/Founder"
+        productDescription:
+          type: string
+        lastFundingRound:
+          type: string
+          enum: [Pre-Seed, Seed, Series A]
+        fundingAmountEstimated:
+          type: number
+        fundingCurrency:
+          type: string
+        knownInvestors:
+          type: array
+          items:
+            type: string
+        behavioralMetrics:
+          $ref: "#/components/schemas/BehavioralMetrics"
+        regionalMetadata:
+          $ref: "#/components/schemas/RegionalMetadata"
+        signalScore:
+          type: number
+        signalLabel:
+          type: string
+          enum: [High signal, Promising, Watch]
+        discoveredAt:
+          type: string
+        source:
+          type: string
+        logoLetter:
+          type: string
+      required:
+        - id
+        - companyName
+        - website
+        - foundersList
+        - productDescription
+        - lastFundingRound
+        - fundingAmountEstimated
+        - fundingCurrency
+        - knownInvestors
+        - behavioralMetrics
+        - regionalMetadata
+        - signalScore
+        - signalLabel
+        - discoveredAt
+        - source
+        - logoLetter
+    SavedSearch:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        filterParams:
+          $ref: "#/components/schemas/FilterParams"
+        createdAt:
+          type: string
+        matchCount:
+          type: number
+        isActive:
+          type: boolean
+      required: [id, name, filterParams, createdAt, matchCount, isActive]
+    SavedSearchInput:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+        filterParams:
+          $ref: "#/components/schemas/FilterParams"
+      required: [name, filterParams]
+    FilterParams:
+      type: object
+      properties:
+        search:
+          type: string
+        region:
+          type: array
+          items:
+            type: string
+        country:
+          type: array
+          items:
+            type: string
+        stage:
+          type: array
+          items:
+            type: string
+        businessModel:
+          type: array
+          items:
+            type: string
+        sector:
+          type: array
+          items:
+            type: string
+      required: [search, region, country, stage, businessModel, sector]
+    PortfolioSource:
+      type: object
+      properties:
+        id:
+          type: string
+        urlLink:
+          type: string
+        status:
+          type: string
+          enum: [Pending, Scanned, Error]
+        companyCount:
+          type: number
+        createdAt:
+          type: string
+      required: [id, urlLink, status, companyCount, createdAt]
+    PortfolioSourceInput:
+      type: object
+      properties:
+        urlLink:
+          type: string
+          minLength: 1
+      required: [urlLink]
+    ProviderName:
+      type: string
+      enum: [github, stripe, notion, google_sheets, slack]
+    GitHubRepository:
+      type: object
+      properties:
+        id:
+          type: string
+        companyId:
+          type: string
+        repository:
+          type: string
+        verified:
+          type: boolean
+        verifiedAt:
+          type: ["string", "null"]
+        lastCheckedAt:
+          type: ["string", "null"]
+        verificationError:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+      required: [id, companyId, repository, verified, verifiedAt, lastCheckedAt, verificationError, createdAt]
+    GitHubRepositoryInput:
+      type: object
+      properties:
+        repository:
+          type: string
+          pattern: "^[^/\\s]+/[^/\\s]+$"
+      required: [repository]
+    IntegrationConnection:
+      type: object
+      properties:
+        provider:
+          $ref: "#/components/schemas/ProviderName"
+        displayName:
+          type: string
+        category:
+          type: string
+          enum: [activity, billing, delivery]
+        status:
+          type: string
+          enum: [connected, vault_configured, not_connected, needs_reauthorization]
+        detail:
+          type: string
+        lastVerifiedAt:
+          type: ["string", "null"]
+      required: [provider, displayName, category, status, detail, lastVerifiedAt]
+    IntegrationVaultInput:
+      type: object
+      properties:
+        label:
+          type: string
+          minLength: 1
+        values:
+          type: object
+          additionalProperties:
+            type: string
+      required: [label, values]
+    IntegrationVerification:
+      type: object
+      properties:
+        provider:
+          $ref: "#/components/schemas/ProviderName"
+        verified:
+          type: boolean
+        message:
+          type: string
+        lastVerifiedAt:
+          type: ["string", "null"]
+      required: [provider, verified, message, lastVerifiedAt]
+    IntegrationDeliveryInput:
+      type: object
+      properties:
+        message:
+          type: string
+          minLength: 1
+      required: [message]
+    IntegrationDeliveryResponse:
+      type: object
+      properties:
+        provider:
+          $ref: "#/components/schemas/ProviderName"
+        delivered:
+          type: boolean
+        message:
+          type: string
+      required: [provider, delivered, message]
+    BillingStatus:
+      type: object
+      properties:
+        tier:
+          type: string
+          enum: [Free, Pro, Enterprise]
+        subscriptionStatus:
+          type: string
+          enum: [active, past_due, canceled]
+        stripeConnected:
+          type: boolean
+        hasCustomer:
+          type: boolean
+        hasSubscription:
+          type: boolean
+      required: [tier, subscriptionStatus, stripeConnected, hasCustomer, hasSubscription]
+    BillingPortalResponse:
+      type: object
+      properties:
+        url:
+          type: string
+      required: [url]

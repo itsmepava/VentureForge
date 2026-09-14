@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "VentureForge"
+description = "An AI-powered company discovery and investment sourcing workspace for emerging venture managers, with behavioral signals, regional filtering, saved searches, alerts, and enriched company profiles."
+version = "1.0.0"
+id = "artifacts/ventureforge"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 18612
+
+[services.development]
+run = "pnpm --filter @workspace/ventureforge run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/ventureforge", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/ventureforge/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "18612"
+BASE_PATH = "/"

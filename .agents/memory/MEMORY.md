@@ -1,0 +1,4 @@
+- [Native TypeScript test boundaries](native-ts-test-boundaries.md) — keep Node strip-types tests on pure modules; workspace DB imports use resolution patterns Node cannot load directly.
+- [Application migration safety](application-migration-safety.md) — migrations run before listen, serialize replicas, and archive conflicts before tightening uniqueness.
+- [Stripe webhook ordering](stripe-webhook-ordering.md) — bind verified events to canonical Stripe state and compare-and-swap tenant bindings so stale delivery cannot roll back billing.
+- [Mixed-script PDF rendering](mixed-script-pdf-rendering.md) — keep script runs on explicit baselines; joiners and combining marks inherit their preceding font.
