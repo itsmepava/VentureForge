@@ -1,49 +1,71 @@
-# See https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files for more about ignoring files.
+# VentureForge repository ignore rules.
+# Keep secrets, generated output, local caches, and IDE state out of Git.
 
-# compiled output
-dist
-tmp
-out-tsc
+# Environment and secrets
+.env
+.env.*
+!.env.example
+*.local
+
+# Dependencies and package-manager state
+node_modules/
+.pnpm-store/
+
+# Build, test, coverage, and generated TypeScript output
+dist/
+build/
+out-tsc/
+tmp/
+coverage/
+typings/
 *.tsbuildinfo
-.expo
-.expo-shared
 
-# dependencies
-node_modules
+# Tool and bundler caches
+.cache/
+.local/
+.upm/
+.vite/
+.turbo/
+.eslintcache
+
+# Logs and local runtime files
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+libpeerconnection.log
+connect.lock
+
+# Replit-local metadata. Artifact manifests are intentionally local to this
+# workspace and are not part of the external Git/GCE handoff.
+.replit
+.replitignore
+.replit-artifact/
+
+# Replit/editor-generated files
+.cursor/
+.replit_state/
 
 # IDEs and editors
-/.idea
+.idea/
 .project
 .classpath
 .c9/
 *.launch
 .settings/
 *.sublime-workspace
-
-# IDE - VSCode
 .vscode/*
 !.vscode/settings.json
 !.vscode/tasks.json
 !.vscode/launch.json
 !.vscode/extensions.json
 
-# misc
-/.sass-cache
-/connect.lock
-/coverage
-/libpeerconnection.log
-npm-debug.log
-yarn-error.log
-testem.log
-/typings
-
-# System Files
+# Operating-system files
 .DS_Store
 Thumbs.db
 
-.cursor/rules/nx-rules.mdc
-.github/instructions/nx.instructions.md
-
-# Replit
-.cache/
-.local/
+# Legacy generated files
+.sass-cache/
+.expo/
+.expo-shared/
