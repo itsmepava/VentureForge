@@ -4,6 +4,29 @@ This document is the operational handoff for Claude Code or another engineer
 working from the GitHub repository. It describes the current `v2.0.0` product
 foundation and the boundaries that are intentionally not finished yet.
 
+## Current handoff target
+
+Use the GitHub `main` branch for the latest workspace state:
+
+```bash
+git clone https://github.com/itsmepava/VentureForge.git
+cd VentureForge
+git checkout main
+```
+
+The `v2.0.0` tag is an immutable release baseline. The latest handoff
+documentation and external-hosting cleanup live on `main`, not on that older
+release tag.
+
+Before changing code, Claude Code should read both `README.md` and this file,
+then run:
+
+```bash
+pnpm install --frozen-lockfile
+pnpm run typecheck
+pnpm run build
+```
+
 ## 1. First-time setup
 
 Requirements:
@@ -22,7 +45,7 @@ corepack enable
 pnpm install --frozen-lockfile
 ```
 
-If working from the released baseline:
+If a task specifically requires the released baseline:
 
 ```bash
 git checkout v2.0.0

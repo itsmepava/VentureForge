@@ -11,6 +11,10 @@ This repository is the `v2.0.0` release line. It is a Node/pnpm monorepo using
 React/Vite, Express, Drizzle, and PostgreSQL. It is not a Python, FastAPI,
 Prisma, Expo, or native mobile application.
 
+For the latest handoff state, use the `main` branch. The `v2.0.0` tag is the
+immutable release baseline; the latest README, `HANDOVER.md`, ignore rules, and
+external-hosting notes are maintained on `main`.
+
 ## Current state
 
 ### Implemented and validated
@@ -240,6 +244,15 @@ The current release tag is `v2.0.0`:
 
 ```bash
 git checkout v2.0.0
+```
+
+To work from the latest GitHub handoff instead:
+
+```bash
+git clone https://github.com/itsmepava/VentureForge.git
+cd VentureForge
+git checkout main
+pnpm install --frozen-lockfile
 ```
 
 For normal development:
