@@ -133,6 +133,7 @@ export const organizations = pgTable(
   {
     id: uuid("id").defaultRandom().primaryKey(),
     companyName: text("company_name").notNull(),
+    primaryGeography: text("primary_geography").notNull().default("South Asia"),
     subscriptionTier: subscriptionTierEnum("subscription_tier")
       .notNull()
       .default("Free"),
@@ -247,5 +248,26 @@ export type PortfolioSource = typeof portfolioSources.$inferSelect;
 export type ProviderConnection = typeof providerConnections.$inferSelect;
 export type GitHubEventSnapshot = typeof githubEventSnapshots.$inferSelect;
 export type SignalAlert = typeof signalAlerts.$inferSelect;
+export const repositoryResearch = pgTable("repository_research", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  organizationId: uuid("organization_id").notNull().references(() => organizations.id),
+  repository: text("repository").notNull(),
+  displayName: text("display_name").notNull(),
+  sourceUrl: text("source_url").notNull(),
+  description: text("description").notNull(),
+  language: text("language"),
+  stars: integer("stars").notNull(),
+  forks: integer("forks").notNull(),
+  openIssues: integer("open_issues").notNull(),
+  archived: boolean("archived").notNull(),
+  lastPushedAt: timestamp("last_pushed_at"),
+  recentCommitCount: integer("recent_commit_count").notNull(),
+  observedAuthorCount: integer("observed_author_count").notNull(),
+  commitsTruncated: boolean("commits_truncated").notNull(),
+  periodStart: timestamp("period_start").notNull(),
+  researchedAt: timestamp("researched_at").notNull(),
+  apiRequests: integer("api_requests").notNull(),
+}, table => [uniqueIndex("repository_research_organization_unique").on(table.organizationId, table.repository)]);
+
 export const emptyJson = sql`'{}'::jsonb`;
 export { z };

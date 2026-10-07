@@ -1,10 +1,8 @@
 import app from "./app";
 import { logger } from "./lib/logger";
-import { runMigrations } from "stripe-replit-sync";
-import { getStripeSync } from "./lib/stripeClient";
 import { scheduleNightlyGitHubEventsWorker } from "./lib/github-events-worker";
 import { runApplicationMigrations } from "@workspace/db";
-import { stripeWebhookBaseUrl } from "./lib/stripe-subscription-events";
+import { startSourcingWorker } from "./lib/sourcing-worker";
 
 const rawPort = process.env["PORT"];
 
@@ -22,19 +20,9 @@ if (Number.isNaN(port) || port <= 0) {
 
 await runApplicationMigrations();
 logger.info("Application database migrations completed");
+await startSourcingWorker();
 
-if (process.env.STRIPE_SYNC_ENABLED === "true") {
-  if (!process.env.DATABASE_URL) {
-    throw new Error("DATABASE_URL is required when STRIPE_SYNC_ENABLED=true");
-  }
-  await runMigrations({ databaseUrl: process.env.DATABASE_URL });
-  const stripeSync = await getStripeSync();
-  const webhookBaseUrl = stripeWebhookBaseUrl(process.env);
-  await stripeSync.findOrCreateManagedWebhook(`${webhookBaseUrl}/api/stripe/webhook`);
-  stripeSync.syncBackfill().catch((error) => logger.error({ err: error }, "Stripe backfill failed"));
-}
-
-app.listen(port, (err) => {
+app.listen(port, process.env.HOST ?? '127.0.0.1', (err) => {
   if (err) {
     logger.error({ err }, "Error listening on port");
     process.exit(1);

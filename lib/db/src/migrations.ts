@@ -308,6 +308,50 @@ CREATE UNIQUE INDEX IF NOT EXISTS organizations_stripe_subscription_unique
   },
 ];
 
+applicationMigrations.push({
+  id: "0004_organization_preferences",
+  sql: "ALTER TABLE organizations ADD COLUMN IF NOT EXISTS primary_geography text NOT NULL DEFAULT 'South Asia';",
+});
+
+applicationMigrations.push({
+  id: "0005_repository_research",
+  sql: `CREATE TABLE IF NOT EXISTS repository_research (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(), organization_id uuid NOT NULL REFERENCES organizations(id),
+    repository text NOT NULL, display_name text NOT NULL, source_url text NOT NULL, description text NOT NULL,
+    language text, stars integer NOT NULL, forks integer NOT NULL, open_issues integer NOT NULL,
+    archived boolean NOT NULL, last_pushed_at timestamp, recent_commit_count integer NOT NULL,
+    observed_author_count integer NOT NULL, commits_truncated boolean NOT NULL,
+    period_start timestamp NOT NULL, researched_at timestamp NOT NULL, api_requests integer NOT NULL
+  );
+  CREATE UNIQUE INDEX IF NOT EXISTS repository_research_organization_unique ON repository_research (organization_id, repository);`,
+});
+
+applicationMigrations.push({
+  id: "0006_automated_sourcing",
+  sql: `CREATE TABLE sourcing_mandates (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(), organization_id uuid NOT NULL REFERENCES organizations(id),
+    name text NOT NULL, criteria jsonb NOT NULL, daily boolean NOT NULL DEFAULT false,
+    next_scan_at timestamp, created_at timestamp NOT NULL DEFAULT now()
+  );
+  CREATE TABLE sourcing_runs (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(), organization_id uuid NOT NULL REFERENCES organizations(id),
+    mandate_id uuid NOT NULL REFERENCES sourcing_mandates(id), mandate_snapshot jsonb NOT NULL,
+    status text NOT NULL DEFAULT 'queued', progress text NOT NULL DEFAULT 'Queued', evidence jsonb NOT NULL DEFAULT '[]',
+    search_calls integer NOT NULL DEFAULT 0, model_calls integer NOT NULL DEFAULT 0, tokens integer NOT NULL DEFAULT 0,
+    added integer NOT NULL DEFAULT 0, duplicates integer NOT NULL DEFAULT 0, errors jsonb NOT NULL DEFAULT '[]',
+    started_at timestamp NOT NULL DEFAULT now(), finished_at timestamp
+  );
+  CREATE TABLE sourcing_prospects (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(), organization_id uuid NOT NULL REFERENCES organizations(id),
+    mandate_id uuid NOT NULL REFERENCES sourcing_mandates(id), run_id uuid NOT NULL REFERENCES sourcing_runs(id),
+    domain text NOT NULL, name text NOT NULL, dossier jsonb NOT NULL, status text NOT NULL DEFAULT 'needs_review',
+    notes text NOT NULL DEFAULT '', discovered_at timestamp NOT NULL DEFAULT now(), updated_at timestamp NOT NULL DEFAULT now(),
+    UNIQUE (organization_id, mandate_id, domain)
+  );
+  CREATE INDEX sourcing_runs_org_started ON sourcing_runs(organization_id, started_at DESC);
+  CREATE INDEX sourcing_mandates_due ON sourcing_mandates(next_scan_at) WHERE daily = true;`,
+});
+
 export async function runApplicationMigrations(pool: Pool) {
   const client = await pool.connect();
   try {

@@ -6,10 +6,13 @@ type ActivityCompany = {
   };
   lastFundingRound: string;
   signalScore: number;
+  discoveredAt: Date;
 };
 
 type ActivitySource = {
   companyCount: number;
+  status: string;
+  createdAt: Date;
 } | undefined;
 
 type ActivityAlert = {
@@ -37,23 +40,23 @@ export function buildActivityItems(
       companyId: alert.companyId,
       severity: alert.severity,
     })),
-    ...companies.slice(0, 2).map((company, index) => ({
+    ...companies.slice(0, 2).map((company) => ({
       id: `activity-company-${company.id}`,
       kind: "company",
-      title: `${company.companyName} matched your thesis`,
+      title: `${company.companyName} added to discovery`,
       description: `${company.regionalMetadata.specificCountry} · ${company.lastFundingRound} · ${company.signalScore} signal score`,
-      timestamp: new Date(now.getTime() - 1000 * 60 * (58 + index * 47)).toISOString(),
+      timestamp: company.discoveredAt.toISOString(),
       companyId: company.id,
       severity: "medium",
     })),
-    {
+    ...(source ? [{
       id: "activity-scan-1",
       kind: "scan",
-      title: "Portfolio scan completed",
-      description: source ? `${source.companyCount} companies enriched from your portfolio.` : "Portfolio scan completed.",
-      timestamp: new Date(now.getTime() - 1000 * 60 * 240).toISOString(),
+      title: source.status === "Scanned" ? "Portfolio scan completed" : source.status === "Error" ? "Portfolio scan failed" : "Portfolio source queued",
+      description: source.status === "Scanned" ? `${source.companyCount} companies found in your portfolio.` : "Source saved. Portfolio ingestion is not yet implemented.",
+      timestamp: source.createdAt.toISOString(),
       companyId: null,
       severity: "low",
-    },
+    }] : []),
   ];
 }

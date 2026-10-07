@@ -1,12 +1,14 @@
 {
   "name": "workspace",
-  "version": "2.0.0",
+  "version": "2.1.0-alpha.1",
   "license": "MIT",
   "scripts": {
-    "preinstall": "sh -c 'rm -f package-lock.json yarn.lock; case \"$npm_config_user_agent\" in pnpm/*) ;; *) echo \"Use pnpm instead\" >&2; exit 1 ;; esac'",
+    "preinstall": "node scripts/check-package-manager.mjs",
     "build": "pnpm run typecheck && pnpm -r --if-present run build",
     "typecheck:libs": "tsc --build",
-    "typecheck": "pnpm run typecheck:libs && pnpm -r --filter \"./artifacts/**\" --filter \"./scripts\" --if-present run typecheck"
+    "typecheck": "pnpm run typecheck:libs && pnpm -r --filter \"./artifacts/**\" --filter \"./scripts\" --if-present run typecheck",
+    "demo": "node scripts/local-demo.mjs",
+    "local": "node scripts/local-demo.mjs"
   },
   "private": true,
   "dependencies": {
@@ -20,16 +22,16 @@
     "@fontsource/noto-sans-sinhala": "^5.3.0",
     "@fontsource/noto-sans-tamil": "^5.3.0",
     "@fontsource/noto-sans-thai": "^5.3.0",
-    "@replit/connectors-sdk": "^0.4.1",
     "@types/pdfkit": "^0.17.6",
     "fernet": "^0.3.3",
     "pdfjs-dist": "^6.3.289",
     "pdfkit": "^0.20.2",
-    "stripe": "^22.6.1",
-    "stripe-replit-sync": "^1.0.0"
+    "stripe": "^22.6.1"
   },
   "devDependencies": {
+    "embedded-postgres": "16.14.0-beta.17",
     "prettier": "^3.9.6",
     "typescript": "~5.9.3"
-  }
+  },
+  "packageManager": "pnpm@12.4.1"
 }

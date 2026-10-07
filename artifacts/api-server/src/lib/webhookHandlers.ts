@@ -1,11 +1,10 @@
-import { getStripeSync } from "./stripeClient.ts";
+import { verifyStripeWebhook } from "./stripeClient.ts";
 
 export class WebhookHandlers {
   static async processWebhook(payload: Buffer, signature: string) {
     if (!Buffer.isBuffer(payload)) {
       throw new Error("Stripe webhook payload must be a raw Buffer");
     }
-    const sync = await getStripeSync();
-    await sync.processWebhook(payload, signature);
+    await verifyStripeWebhook(payload, signature);
   }
 }

@@ -23,6 +23,322 @@ tags:
   - name: billing
     description: Stripe subscription status and billing portal
 paths:
+  /sourcing:
+    {
+      "get":
+        {
+          "operationId": "getSourcingDesk",
+          "tags": ["sourcing"],
+          "responses":
+            {
+              "200":
+                {
+                  "description": "Sourcing response",
+                  "content":
+                    {
+                      "application/json":
+                        {
+                          "schema":
+                            { "$ref": "#/components/schemas/SourcingDesk" },
+                        },
+                    },
+                },
+              "400": { "description": "Invalid input" },
+              "404": { "description": "Record not found" },
+            },
+        },
+    }
+  /sourcing/mandates:
+    {
+      "post":
+        {
+          "operationId": "createSourcingMandate",
+          "tags": ["sourcing"],
+          "responses":
+            {
+              "201":
+                {
+                  "description": "Sourcing response",
+                  "content":
+                    {
+                      "application/json":
+                        {
+                          "schema":
+                            { "$ref": "#/components/schemas/SourcingMandate" },
+                        },
+                    },
+                },
+              "400": { "description": "Invalid input" },
+              "404": { "description": "Record not found" },
+            },
+          "requestBody":
+            {
+              "required": true,
+              "content":
+                {
+                  "application/json":
+                    {
+                      "schema":
+                        { "$ref": "#/components/schemas/SourcingMandateInput" },
+                    },
+                },
+            },
+        },
+    }
+  /sourcing/mandates/{id}:
+    {
+      "patch":
+        {
+          "operationId": "updateSourcingMandate",
+          "tags": ["sourcing"],
+          "responses":
+            {
+              "200":
+                {
+                  "description": "Sourcing response",
+                  "content":
+                    {
+                      "application/json":
+                        {
+                          "schema":
+                            { "$ref": "#/components/schemas/SourcingMandate" },
+                        },
+                    },
+                },
+              "400": { "description": "Invalid input" },
+              "404": { "description": "Record not found" },
+            },
+          "requestBody":
+            {
+              "required": true,
+              "content":
+                {
+                  "application/json":
+                    {
+                      "schema":
+                        { "$ref": "#/components/schemas/SourcingMandateInput" },
+                    },
+                },
+            },
+          "parameters":
+            [
+              {
+                "name": "id",
+                "in": "path",
+                "required": true,
+                "schema": { "type": "string" },
+              },
+            ],
+        },
+    }
+  /sourcing/mandates/{id}/scan:
+    {
+      "post":
+        {
+          "operationId": "startSourcingScan",
+          "tags": ["sourcing"],
+          "responses":
+            {
+              "202":
+                {
+                  "description": "Sourcing response",
+                  "content":
+                    {
+                      "application/json":
+                        {
+                          "schema":
+                            { "$ref": "#/components/schemas/SourcingRun" },
+                        },
+                    },
+                },
+              "400": { "description": "Invalid input" },
+              "404": { "description": "Record not found" },
+            },
+          "parameters":
+            [
+              {
+                "name": "id",
+                "in": "path",
+                "required": true,
+                "schema": { "type": "string" },
+              },
+            ],
+        },
+    }
+  /sourcing/provider:
+    {
+      "put":
+        {
+          "operationId": "saveSourcingProvider",
+          "tags": ["sourcing"],
+          "responses":
+            {
+              "200":
+                {
+                  "description": "Sourcing response",
+                  "content":
+                    {
+                      "application/json":
+                        {
+                          "schema":
+                            { "$ref": "#/components/schemas/SourcingProvider" },
+                        },
+                    },
+                },
+              "400": { "description": "Invalid input" },
+              "404": { "description": "Record not found" },
+            },
+          "requestBody":
+            {
+              "required": true,
+              "content":
+                {
+                  "application/json":
+                    {
+                      "schema":
+                        {
+                          "$ref": "#/components/schemas/SourcingProviderInput",
+                        },
+                    },
+                },
+            },
+        },
+      "delete":
+        {
+          "operationId": "deleteSourcingProvider",
+          "tags": ["sourcing"],
+          "responses":
+            {
+              "204": { "description": "Sourcing response" },
+              "400": { "description": "Invalid input" },
+              "404": { "description": "Record not found" },
+            },
+        },
+    }
+  /sourcing/prospects/{id}:
+    {
+      "patch":
+        {
+          "operationId": "updateSourcingProspect",
+          "tags": ["sourcing"],
+          "responses":
+            {
+              "200":
+                {
+                  "description": "Sourcing response",
+                  "content":
+                    {
+                      "application/json":
+                        {
+                          "schema":
+                            { "$ref": "#/components/schemas/SourcingProspect" },
+                        },
+                    },
+                },
+              "400": { "description": "Invalid input" },
+              "404": { "description": "Record not found" },
+            },
+          "requestBody":
+            {
+              "required": true,
+              "content":
+                {
+                  "application/json":
+                    {
+                      "schema":
+                        {
+                          "$ref": "#/components/schemas/SourcingProspectInput",
+                        },
+                    },
+                },
+            },
+          "parameters":
+            [
+              {
+                "name": "id",
+                "in": "path",
+                "required": true,
+                "schema": { "type": "string" },
+              },
+            ],
+        },
+    }
+  /sourcing/export.csv:
+    {
+      "get":
+        {
+          "operationId": "exportSourcingProspects",
+          "tags": ["sourcing"],
+          "responses":
+            {
+              "200":
+                {
+                  "description": "CSV export of all stored prospects",
+                  "content": { "text/csv": { "schema": { "type": "string" } } },
+                },
+            },
+        },
+    }
+  /repository-research:
+    get:
+      operationId: listRepositoryResearch
+      tags: [companies]
+      summary: List saved GitHub research
+      responses:
+        "200":
+          description: Saved research
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/RepositoryResearch"
+    post:
+      operationId: researchGitHubRepository
+      tags: [companies]
+      summary: Fetch live GitHub evidence and save it
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RepositoryResearchInput"
+      responses:
+        "200":
+          description: Research saved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RepositoryResearch"
+  /organization:
+    get:
+      operationId: getOrganization
+      tags: [dashboard]
+      summary: Get current workspace preferences
+      responses:
+        "200":
+          description: Workspace preferences
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrganizationPreferences"
+    patch:
+      operationId: updateOrganization
+      tags: [dashboard]
+      summary: Save workspace preferences
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OrganizationPreferences"
+      responses:
+        "200":
+          description: Saved workspace preferences
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrganizationPreferences"
   /healthz:
     get:
       operationId: healthCheck
@@ -495,6 +811,366 @@ components:
       style: form
       explode: true
   schemas:
+    SourcingProspect:
+      {
+        "type": "object",
+        "properties":
+          {
+            "id": { "type": "string" },
+            "organization_id": { "type": "string" },
+            "mandate_id": { "type": "string" },
+            "run_id": { "type": "string" },
+            "domain": { "type": "string" },
+            "name": { "type": "string" },
+            "dossier": { "$ref": "#/components/schemas/SourcingDossier" },
+            "status": { "type": "string" },
+            "notes": { "type": "string" },
+            "discovered_at": { "type": "string" },
+            "updated_at": { "type": "string" },
+          },
+        "required":
+          [
+            "id",
+            "organization_id",
+            "mandate_id",
+            "run_id",
+            "domain",
+            "name",
+            "dossier",
+            "status",
+            "notes",
+            "discovered_at",
+            "updated_at",
+          ],
+      }
+    SourcingRun:
+      {
+        "type": "object",
+        "properties":
+          {
+            "id": { "type": "string" },
+            "organization_id": { "type": "string" },
+            "mandate_id": { "type": "string" },
+            "mandate_snapshot":
+              { "$ref": "#/components/schemas/SourcingMandate" },
+            "status": { "type": "string" },
+            "progress": { "type": "string" },
+            "evidence":
+              {
+                "type": "array",
+                "items": { "$ref": "#/components/schemas/SourcingEvidence" },
+              },
+            "search_calls": { "type": "number" },
+            "model_calls": { "type": "number" },
+            "tokens": { "type": "number" },
+            "added": { "type": "number" },
+            "duplicates": { "type": "number" },
+            "errors": { "type": "array", "items": { "type": "string" } },
+            "started_at": { "type": "string" },
+            "finished_at": { "type": "string", "nullable": true },
+          },
+        "required":
+          [
+            "id",
+            "organization_id",
+            "mandate_id",
+            "mandate_snapshot",
+            "status",
+            "progress",
+            "evidence",
+            "search_calls",
+            "model_calls",
+            "tokens",
+            "added",
+            "duplicates",
+            "errors",
+            "started_at",
+            "finished_at",
+          ],
+      }
+    SourcingMandate:
+      {
+        "type": "object",
+        "properties":
+          {
+            "id": { "type": "string" },
+            "organization_id": { "type": "string" },
+            "name": { "type": "string" },
+            "criteria": { "$ref": "#/components/schemas/SourcingCriteria" },
+            "daily": { "type": "boolean" },
+            "next_scan_at": { "type": "string", "nullable": true },
+            "created_at": { "type": "string" },
+          },
+        "required":
+          [
+            "id",
+            "organization_id",
+            "name",
+            "criteria",
+            "daily",
+            "next_scan_at",
+            "created_at",
+          ],
+      }
+    SourcingDossier:
+      {
+        "type": "object",
+        "properties":
+          {
+            "name": { "type": "string" },
+            "website": { "type": "string" },
+            "facts":
+              {
+                "type": "object",
+                "additionalProperties":
+                  { "$ref": "#/components/schemas/SourcingFact" },
+              },
+            "checks":
+              {
+                "type": "array",
+                "items": { "$ref": "#/components/schemas/SourcingCheck" },
+              },
+            "evidence":
+              {
+                "type": "array",
+                "items": { "$ref": "#/components/schemas/SourcingEvidence" },
+              },
+            "ready": { "type": "boolean" },
+            "gaps": { "type": "array", "items": { "type": "string" } },
+            "researchedAt": { "type": "string" },
+          },
+        "required":
+          [
+            "name",
+            "website",
+            "facts",
+            "checks",
+            "evidence",
+            "ready",
+            "gaps",
+            "researchedAt",
+          ],
+      }
+    SourcingCheck:
+      {
+        "type": "object",
+        "properties":
+          {
+            "criterion": { "type": "string" },
+            "result":
+              { "type": "string", "enum": ["match", "fail", "unknown"] },
+            "sourceId": { "type": "string" },
+            "quote": { "type": "string" },
+          },
+        "required": ["criterion", "result", "sourceId", "quote"],
+      }
+    SourcingFact:
+      {
+        "type": "object",
+        "properties":
+          {
+            "value": { "type": "string" },
+            "sourceId": { "type": "string" },
+            "quote": { "type": "string" },
+          },
+        "required": ["value", "sourceId", "quote"],
+      }
+    SourcingEvidence:
+      {
+        "type": "object",
+        "properties":
+          {
+            "id": { "type": "string" },
+            "url": { "type": "string" },
+            "title": { "type": "string" },
+            "text": { "type": "string" },
+            "publishedAt": { "type": "string", "nullable": true },
+            "observedAt": { "type": "string" },
+            "query": { "type": "string" },
+          },
+        "required":
+          ["id", "url", "title", "text", "publishedAt", "observedAt", "query"],
+      }
+    SourcingCriteria:
+      {
+        "type": "object",
+        "properties":
+          {
+            "geographies": { "type": "array", "items": { "type": "string" } },
+            "sectors": { "type": "array", "items": { "type": "string" } },
+            "stages": { "type": "array", "items": { "type": "string" } },
+            "businessModels":
+              { "type": "array", "items": { "type": "string" } },
+            "signals": { "type": "array", "items": { "type": "string" } },
+            "exclusions": { "type": "array", "items": { "type": "string" } },
+          },
+        "required":
+          [
+            "geographies",
+            "sectors",
+            "stages",
+            "businessModels",
+            "signals",
+            "exclusions",
+          ],
+      }
+    SourcingMandateInput:
+      {
+        "type": "object",
+        "properties":
+          {
+            "name": { "type": "string", "minLength": 1, "maxLength": 100 },
+            "daily": { "type": "boolean" },
+            "criteria": { "$ref": "#/components/schemas/SourcingCriteria" },
+          },
+        "required": ["name", "daily", "criteria"],
+      }
+    SourcingProviderInput:
+      {
+        "type": "object",
+        "properties":
+          {
+            "apiKey": { "type": "string", "minLength": 10, "maxLength": 500 },
+            "model": { "type": "string", "maxLength": 150 },
+          },
+        "required": ["apiKey", "model"],
+      }
+    SourcingProvider:
+      {
+        "type": "object",
+        "properties":
+          {
+            "configured": { "type": "boolean" },
+            "model": { "type": "string" },
+          },
+        "required": ["configured", "model"],
+      }
+    SourcingProspectInput:
+      {
+        "type": "object",
+        "properties":
+          {
+            "status":
+              {
+                "type": "string",
+                "enum": ["contacted", "dismissed", "needs_review"],
+              },
+            "notes": { "type": "string", "maxLength": 5000 },
+          },
+        "required": ["status", "notes"],
+      }
+    SourcingRecord: { "type": "object", "additionalProperties": {} }
+    SourcingDesk:
+      {
+        "type": "object",
+        "properties":
+          {
+            "mandates":
+              {
+                "type": "array",
+                "items": { "$ref": "#/components/schemas/SourcingMandate" },
+              },
+            "runs":
+              {
+                "type": "array",
+                "items": { "$ref": "#/components/schemas/SourcingRun" },
+              },
+            "prospects":
+              {
+                "type": "array",
+                "items": { "$ref": "#/components/schemas/SourcingProspect" },
+              },
+            "provider": { "$ref": "#/components/schemas/SourcingProvider" },
+            "limits":
+              {
+                "type": "object",
+                "properties":
+                  {
+                    "prospects": { "type": "number" },
+                    "runs": { "type": "number" },
+                    "companiesPerScan": { "type": "number" },
+                  },
+                "required": ["prospects", "runs", "companiesPerScan"],
+              },
+          },
+        "required": ["mandates", "runs", "prospects", "provider", "limits"],
+      }
+    RepositoryResearchInput:
+      type: object
+      required: [repository]
+      properties:
+        repository:
+          type: string
+          minLength: 3
+          maxLength: 200
+    RepositoryResearch:
+      type: object
+      required:
+        [
+          id,
+          repository,
+          displayName,
+          sourceUrl,
+          description,
+          language,
+          stars,
+          forks,
+          openIssues,
+          archived,
+          lastPushedAt,
+          recentCommitCount,
+          observedAuthorCount,
+          commitsTruncated,
+          periodStart,
+          researchedAt,
+          apiRequests,
+        ]
+      properties:
+        id:
+          type: string
+        repository:
+          type: string
+        displayName:
+          type: string
+        sourceUrl:
+          type: string
+        description:
+          type: string
+        language:
+          type: [string, "null"]
+        stars:
+          type: number
+        forks:
+          type: number
+        openIssues:
+          type: number
+        archived:
+          type: boolean
+        lastPushedAt:
+          type: [string, "null"]
+        recentCommitCount:
+          type: number
+        observedAuthorCount:
+          type: number
+        commitsTruncated:
+          type: boolean
+        periodStart:
+          type: string
+        researchedAt:
+          type: string
+        apiRequests:
+          type: number
+    OrganizationPreferences:
+      type: object
+      required: [companyName, primaryGeography]
+      properties:
+        companyName:
+          type: string
+          minLength: 1
+          maxLength: 120
+        primaryGeography:
+          type: string
+          enum: [South Asia, Southeast Asia, East Asia]
     HealthStatus:
       type: object
       properties:
@@ -588,7 +1264,8 @@ components:
           type: string
         commitVelocitySpike:
           type: number
-      required: [builderResilienceScore, problemSolvingNotes, commitVelocitySpike]
+      required:
+        [builderResilienceScore, problemSolvingNotes, commitVelocitySpike]
     RegionalMetadata:
       type: object
       properties:
@@ -602,7 +1279,8 @@ components:
           type: string
         employeeCount:
           type: number
-      required: [geographyRegion, specificCountry, businessModel, sector, employeeCount]
+      required:
+        [geographyRegion, specificCountry, businessModel, sector, employeeCount]
     DiscoveredCompany:
       type: object
       properties:
@@ -756,7 +1434,17 @@ components:
           type: ["string", "null"]
         createdAt:
           type: string
-      required: [id, companyId, repository, verified, verifiedAt, lastCheckedAt, verificationError, createdAt]
+      required:
+        [
+          id,
+          companyId,
+          repository,
+          verified,
+          verifiedAt,
+          lastCheckedAt,
+          verificationError,
+          createdAt,
+        ]
     GitHubRepositoryInput:
       type: object
       properties:
@@ -776,12 +1464,14 @@ components:
           enum: [activity, billing, delivery]
         status:
           type: string
-          enum: [connected, vault_configured, not_connected, needs_reauthorization]
+          enum:
+            [connected, vault_configured, not_connected, needs_reauthorization]
         detail:
           type: string
         lastVerifiedAt:
           type: ["string", "null"]
-      required: [provider, displayName, category, status, detail, lastVerifiedAt]
+      required:
+        [provider, displayName, category, status, detail, lastVerifiedAt]
     IntegrationVaultInput:
       type: object
       properties:
@@ -837,7 +1527,14 @@ components:
           type: boolean
         hasSubscription:
           type: boolean
-      required: [tier, subscriptionStatus, stripeConnected, hasCustomer, hasSubscription]
+      required:
+        [
+          tier,
+          subscriptionStatus,
+          stripeConnected,
+          hasCustomer,
+          hasSubscription,
+        ]
     BillingPortalResponse:
       type: object
       properties:

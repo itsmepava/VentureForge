@@ -146,6 +146,7 @@ const companySeed = [
 let seedPromise: Promise<void> | undefined;
 
 export function ensureDemoData() {
+  const sampleDataEnabled = process.env.DEMO_SEED_DATA === "true";
   seedPromise ??= (async () => {
     const existingOrg = await db
       .select({ id: organizations.id })
@@ -153,23 +154,24 @@ export function ensureDemoData() {
       .where(eq(organizations.id, DEMO_ORGANIZATION_ID))
       .limit(1);
     if (existingOrg.length) {
-      await ensureDemoSignalData();
+      if (sampleDataEnabled) await ensureDemoSignalData();
       return;
     }
 
     await db.insert(organizations).values({
       id: DEMO_ORGANIZATION_ID,
-      companyName: "Northstar Ventures",
-      subscriptionTier: "Pro",
+      companyName: sampleDataEnabled ? "Northstar Ventures" : "My venture desk",
+      subscriptionTier: "Free",
       subscriptionStatus: "active",
     });
     await db.insert(users).values({
       id: DEMO_USER_ID,
-      email: "partner@northstar.vc",
+      email: sampleDataEnabled ? "partner@northstar.vc" : "local@localhost",
       passwordHash: null,
       role: "Admin",
       organizationId: DEMO_ORGANIZATION_ID,
     });
+    if (!sampleDataEnabled) return;
     await db.insert(discoveredCompanies).values(
       companySeed.map((company) => ({
         ...company,
@@ -213,8 +215,8 @@ export function ensureDemoData() {
       {
         id: "00000000-0000-4000-8000-000000000301",
         urlLink: "https://northstar.vc/portfolio",
-        status: "Scanned",
-        companyCount: 12,
+        status: "Pending",
+        companyCount: 0,
         organizationId: DEMO_ORGANIZATION_ID,
       },
     ]);

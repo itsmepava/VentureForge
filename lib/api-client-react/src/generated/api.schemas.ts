@@ -5,6 +5,206 @@
  * VentureForge investment sourcing API
  * OpenAPI spec version: 0.1.0
  */
+export interface SourcingFact {
+  value: string;
+  sourceId: string;
+  quote: string;
+}
+
+export type SourcingCheckResult = typeof SourcingCheckResult[keyof typeof SourcingCheckResult];
+
+
+export const SourcingCheckResult = {
+  match: 'match',
+  fail: 'fail',
+  unknown: 'unknown',
+} as const;
+
+export interface SourcingCheck {
+  criterion: string;
+  result: SourcingCheckResult;
+  sourceId: string;
+  quote: string;
+}
+
+export interface SourcingEvidence {
+  id: string;
+  url: string;
+  title: string;
+  text: string;
+  publishedAt: string | null;
+  observedAt: string;
+  query: string;
+}
+
+export type SourcingDossierFacts = {[key: string]: SourcingFact};
+
+export interface SourcingDossier {
+  name: string;
+  website: string;
+  facts: SourcingDossierFacts;
+  checks: SourcingCheck[];
+  evidence: SourcingEvidence[];
+  ready: boolean;
+  gaps: string[];
+  researchedAt: string;
+}
+
+export interface SourcingProspect {
+  id: string;
+  organization_id: string;
+  mandate_id: string;
+  run_id: string;
+  domain: string;
+  name: string;
+  dossier: SourcingDossier;
+  status: string;
+  notes: string;
+  discovered_at: string;
+  updated_at: string;
+}
+
+export interface SourcingCriteria {
+  geographies: string[];
+  sectors: string[];
+  stages: string[];
+  businessModels: string[];
+  signals: string[];
+  exclusions: string[];
+}
+
+export interface SourcingMandate {
+  id: string;
+  organization_id: string;
+  name: string;
+  criteria: SourcingCriteria;
+  daily: boolean;
+  next_scan_at: string | null;
+  created_at: string;
+}
+
+export interface SourcingRun {
+  id: string;
+  organization_id: string;
+  mandate_id: string;
+  mandate_snapshot: SourcingMandate;
+  status: string;
+  progress: string;
+  evidence: SourcingEvidence[];
+  search_calls: number;
+  model_calls: number;
+  tokens: number;
+  added: number;
+  duplicates: number;
+  errors: string[];
+  started_at: string;
+  finished_at: string | null;
+}
+
+export interface SourcingMandateInput {
+  /**
+     * @minLength 1
+     * @maxLength 100
+     */
+  name: string;
+  daily: boolean;
+  criteria: SourcingCriteria;
+}
+
+export interface SourcingProviderInput {
+  /**
+     * @minLength 10
+     * @maxLength 500
+     */
+  apiKey: string;
+  /** @maxLength 150 */
+  model: string;
+}
+
+export interface SourcingProvider {
+  configured: boolean;
+  model: string;
+}
+
+export type SourcingProspectInputStatus = typeof SourcingProspectInputStatus[keyof typeof SourcingProspectInputStatus];
+
+
+export const SourcingProspectInputStatus = {
+  contacted: 'contacted',
+  dismissed: 'dismissed',
+  needs_review: 'needs_review',
+} as const;
+
+export interface SourcingProspectInput {
+  status: SourcingProspectInputStatus;
+  /** @maxLength 5000 */
+  notes: string;
+}
+
+export interface SourcingRecord {[key: string]: unknown}
+
+export type SourcingDeskLimits = {
+  prospects: number;
+  runs: number;
+  companiesPerScan: number;
+};
+
+export interface SourcingDesk {
+  mandates: SourcingMandate[];
+  runs: SourcingRun[];
+  prospects: SourcingProspect[];
+  provider: SourcingProvider;
+  limits: SourcingDeskLimits;
+}
+
+export interface RepositoryResearchInput {
+  /**
+     * @minLength 3
+     * @maxLength 200
+     */
+  repository: string;
+}
+
+export interface RepositoryResearch {
+  id: string;
+  repository: string;
+  displayName: string;
+  sourceUrl: string;
+  description: string;
+  /** @nullable */
+  language: string | null;
+  stars: number;
+  forks: number;
+  openIssues: number;
+  archived: boolean;
+  /** @nullable */
+  lastPushedAt: string | null;
+  recentCommitCount: number;
+  observedAuthorCount: number;
+  commitsTruncated: boolean;
+  periodStart: string;
+  researchedAt: string;
+  apiRequests: number;
+}
+
+export type OrganizationPreferencesPrimaryGeography = typeof OrganizationPreferencesPrimaryGeography[keyof typeof OrganizationPreferencesPrimaryGeography];
+
+
+export const OrganizationPreferencesPrimaryGeography = {
+  South_Asia: 'South Asia',
+  Southeast_Asia: 'Southeast Asia',
+  East_Asia: 'East Asia',
+} as const;
+
+export interface OrganizationPreferences {
+  /**
+     * @minLength 1
+     * @maxLength 120
+     */
+  companyName: string;
+  primaryGeography: OrganizationPreferencesPrimaryGeography;
+}
+
 export interface HealthStatus {
   status: string;
 }
@@ -322,4 +522,3 @@ stage?: StageQueryParameter;
 businessModel?: BusinessModelQueryParameter;
 sector?: SectorQueryParameter;
 };
-

@@ -6,6 +6,9 @@ import portfolioRouter from "./portfolio";
 import savedSearchesRouter from "./saved-searches";
 import integrationsRouter from "./integrations";
 import billingRouter from "./billing";
+import organizationRouter from "./organization";
+import repositoryResearchRouter from "./repository-research";
+import sourcingRouter from "./sourcing";
 
 const router: IRouter = Router();
 
@@ -16,5 +19,8 @@ router.use(savedSearchesRouter);
 router.use(portfolioRouter);
 router.use(integrationsRouter);
 router.use(billingRouter);
+router.use(organizationRouter);
+router.use(repositoryResearchRouter);
+router.use(sourcingRouter);
 
 export default router;

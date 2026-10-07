@@ -8,6 +8,405 @@
 import * as zod from 'zod';
 
 
+export const GetSourcingDeskResponse = zod.object({
+  "mandates": zod.array(zod.object({
+  "id": zod.string(),
+  "organization_id": zod.string(),
+  "name": zod.string(),
+  "criteria": zod.object({
+  "geographies": zod.array(zod.string()),
+  "sectors": zod.array(zod.string()),
+  "stages": zod.array(zod.string()),
+  "businessModels": zod.array(zod.string()),
+  "signals": zod.array(zod.string()),
+  "exclusions": zod.array(zod.string())
+}),
+  "daily": zod.boolean(),
+  "next_scan_at": zod.string().nullable(),
+  "created_at": zod.string()
+})),
+  "runs": zod.array(zod.object({
+  "id": zod.string(),
+  "organization_id": zod.string(),
+  "mandate_id": zod.string(),
+  "mandate_snapshot": zod.object({
+  "id": zod.string(),
+  "organization_id": zod.string(),
+  "name": zod.string(),
+  "criteria": zod.object({
+  "geographies": zod.array(zod.string()),
+  "sectors": zod.array(zod.string()),
+  "stages": zod.array(zod.string()),
+  "businessModels": zod.array(zod.string()),
+  "signals": zod.array(zod.string()),
+  "exclusions": zod.array(zod.string())
+}),
+  "daily": zod.boolean(),
+  "next_scan_at": zod.string().nullable(),
+  "created_at": zod.string()
+}),
+  "status": zod.string(),
+  "progress": zod.string(),
+  "evidence": zod.array(zod.object({
+  "id": zod.string(),
+  "url": zod.string(),
+  "title": zod.string(),
+  "text": zod.string(),
+  "publishedAt": zod.string().nullable(),
+  "observedAt": zod.string(),
+  "query": zod.string()
+})),
+  "search_calls": zod.number(),
+  "model_calls": zod.number(),
+  "tokens": zod.number(),
+  "added": zod.number(),
+  "duplicates": zod.number(),
+  "errors": zod.array(zod.string()),
+  "started_at": zod.string(),
+  "finished_at": zod.string().nullable()
+})),
+  "prospects": zod.array(zod.object({
+  "id": zod.string(),
+  "organization_id": zod.string(),
+  "mandate_id": zod.string(),
+  "run_id": zod.string(),
+  "domain": zod.string(),
+  "name": zod.string(),
+  "dossier": zod.object({
+  "name": zod.string(),
+  "website": zod.string(),
+  "facts": zod.record(zod.string(), zod.object({
+  "value": zod.string(),
+  "sourceId": zod.string(),
+  "quote": zod.string()
+})),
+  "checks": zod.array(zod.object({
+  "criterion": zod.string(),
+  "result": zod.enum(['match', 'fail', 'unknown']),
+  "sourceId": zod.string(),
+  "quote": zod.string()
+})),
+  "evidence": zod.array(zod.object({
+  "id": zod.string(),
+  "url": zod.string(),
+  "title": zod.string(),
+  "text": zod.string(),
+  "publishedAt": zod.string().nullable(),
+  "observedAt": zod.string(),
+  "query": zod.string()
+})),
+  "ready": zod.boolean(),
+  "gaps": zod.array(zod.string()),
+  "researchedAt": zod.string()
+}),
+  "status": zod.string(),
+  "notes": zod.string(),
+  "discovered_at": zod.string(),
+  "updated_at": zod.string()
+})),
+  "provider": zod.object({
+  "configured": zod.boolean(),
+  "model": zod.string()
+}),
+  "limits": zod.object({
+  "prospects": zod.number(),
+  "runs": zod.number(),
+  "companiesPerScan": zod.number()
+})
+})
+
+
+export const createSourcingMandateBodyNameMax = 100;
+
+
+
+export const CreateSourcingMandateBody = zod.object({
+  "name": zod.string().min(1).max(createSourcingMandateBodyNameMax),
+  "daily": zod.boolean(),
+  "criteria": zod.object({
+  "geographies": zod.array(zod.string()),
+  "sectors": zod.array(zod.string()),
+  "stages": zod.array(zod.string()),
+  "businessModels": zod.array(zod.string()),
+  "signals": zod.array(zod.string()),
+  "exclusions": zod.array(zod.string())
+})
+})
+
+export const CreateSourcingMandateResponse = zod.object({
+  "id": zod.string(),
+  "organization_id": zod.string(),
+  "name": zod.string(),
+  "criteria": zod.object({
+  "geographies": zod.array(zod.string()),
+  "sectors": zod.array(zod.string()),
+  "stages": zod.array(zod.string()),
+  "businessModels": zod.array(zod.string()),
+  "signals": zod.array(zod.string()),
+  "exclusions": zod.array(zod.string())
+}),
+  "daily": zod.boolean(),
+  "next_scan_at": zod.string().nullable(),
+  "created_at": zod.string()
+})
+
+
+export const UpdateSourcingMandateParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+export const updateSourcingMandateBodyNameMax = 100;
+
+
+
+export const UpdateSourcingMandateBody = zod.object({
+  "name": zod.string().min(1).max(updateSourcingMandateBodyNameMax),
+  "daily": zod.boolean(),
+  "criteria": zod.object({
+  "geographies": zod.array(zod.string()),
+  "sectors": zod.array(zod.string()),
+  "stages": zod.array(zod.string()),
+  "businessModels": zod.array(zod.string()),
+  "signals": zod.array(zod.string()),
+  "exclusions": zod.array(zod.string())
+})
+})
+
+export const UpdateSourcingMandateResponse = zod.object({
+  "id": zod.string(),
+  "organization_id": zod.string(),
+  "name": zod.string(),
+  "criteria": zod.object({
+  "geographies": zod.array(zod.string()),
+  "sectors": zod.array(zod.string()),
+  "stages": zod.array(zod.string()),
+  "businessModels": zod.array(zod.string()),
+  "signals": zod.array(zod.string()),
+  "exclusions": zod.array(zod.string())
+}),
+  "daily": zod.boolean(),
+  "next_scan_at": zod.string().nullable(),
+  "created_at": zod.string()
+})
+
+
+export const StartSourcingScanParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+export const StartSourcingScanResponse = zod.object({
+  "id": zod.string(),
+  "organization_id": zod.string(),
+  "mandate_id": zod.string(),
+  "mandate_snapshot": zod.object({
+  "id": zod.string(),
+  "organization_id": zod.string(),
+  "name": zod.string(),
+  "criteria": zod.object({
+  "geographies": zod.array(zod.string()),
+  "sectors": zod.array(zod.string()),
+  "stages": zod.array(zod.string()),
+  "businessModels": zod.array(zod.string()),
+  "signals": zod.array(zod.string()),
+  "exclusions": zod.array(zod.string())
+}),
+  "daily": zod.boolean(),
+  "next_scan_at": zod.string().nullable(),
+  "created_at": zod.string()
+}),
+  "status": zod.string(),
+  "progress": zod.string(),
+  "evidence": zod.array(zod.object({
+  "id": zod.string(),
+  "url": zod.string(),
+  "title": zod.string(),
+  "text": zod.string(),
+  "publishedAt": zod.string().nullable(),
+  "observedAt": zod.string(),
+  "query": zod.string()
+})),
+  "search_calls": zod.number(),
+  "model_calls": zod.number(),
+  "tokens": zod.number(),
+  "added": zod.number(),
+  "duplicates": zod.number(),
+  "errors": zod.array(zod.string()),
+  "started_at": zod.string(),
+  "finished_at": zod.string().nullable()
+})
+
+
+export const saveSourcingProviderBodyApiKeyMin = 10;
+export const saveSourcingProviderBodyApiKeyMax = 500;
+
+export const saveSourcingProviderBodyModelMax = 150;
+
+
+
+export const SaveSourcingProviderBody = zod.object({
+  "apiKey": zod.string().min(saveSourcingProviderBodyApiKeyMin).max(saveSourcingProviderBodyApiKeyMax),
+  "model": zod.string().max(saveSourcingProviderBodyModelMax)
+})
+
+export const SaveSourcingProviderResponse = zod.object({
+  "configured": zod.boolean(),
+  "model": zod.string()
+})
+
+
+export const DeleteSourcingProviderResponse = zod.void()
+
+
+export const UpdateSourcingProspectParams = zod.object({
+  "id": zod.coerce.string()
+})
+
+export const updateSourcingProspectBodyNotesMax = 5000;
+
+
+
+export const UpdateSourcingProspectBody = zod.object({
+  "status": zod.enum(['contacted', 'dismissed', 'needs_review']),
+  "notes": zod.string().max(updateSourcingProspectBodyNotesMax)
+})
+
+export const UpdateSourcingProspectResponse = zod.object({
+  "id": zod.string(),
+  "organization_id": zod.string(),
+  "mandate_id": zod.string(),
+  "run_id": zod.string(),
+  "domain": zod.string(),
+  "name": zod.string(),
+  "dossier": zod.object({
+  "name": zod.string(),
+  "website": zod.string(),
+  "facts": zod.record(zod.string(), zod.object({
+  "value": zod.string(),
+  "sourceId": zod.string(),
+  "quote": zod.string()
+})),
+  "checks": zod.array(zod.object({
+  "criterion": zod.string(),
+  "result": zod.enum(['match', 'fail', 'unknown']),
+  "sourceId": zod.string(),
+  "quote": zod.string()
+})),
+  "evidence": zod.array(zod.object({
+  "id": zod.string(),
+  "url": zod.string(),
+  "title": zod.string(),
+  "text": zod.string(),
+  "publishedAt": zod.string().nullable(),
+  "observedAt": zod.string(),
+  "query": zod.string()
+})),
+  "ready": zod.boolean(),
+  "gaps": zod.array(zod.string()),
+  "researchedAt": zod.string()
+}),
+  "status": zod.string(),
+  "notes": zod.string(),
+  "discovered_at": zod.string(),
+  "updated_at": zod.string()
+})
+
+
+export const ExportSourcingProspectsResponse = zod.unknown()
+
+
+/**
+ * @summary List saved GitHub research
+ */
+export const ListRepositoryResearchResponseItem = zod.object({
+  "id": zod.string(),
+  "repository": zod.string(),
+  "displayName": zod.string(),
+  "sourceUrl": zod.string(),
+  "description": zod.string(),
+  "language": zod.string().nullable(),
+  "stars": zod.number(),
+  "forks": zod.number(),
+  "openIssues": zod.number(),
+  "archived": zod.boolean(),
+  "lastPushedAt": zod.string().nullable(),
+  "recentCommitCount": zod.number(),
+  "observedAuthorCount": zod.number(),
+  "commitsTruncated": zod.boolean(),
+  "periodStart": zod.string(),
+  "researchedAt": zod.string(),
+  "apiRequests": zod.number()
+})
+export const ListRepositoryResearchResponse = zod.array(ListRepositoryResearchResponseItem)
+
+
+/**
+ * @summary Fetch live GitHub evidence and save it
+ */
+export const researchGitHubRepositoryBodyRepositoryMin = 3;
+export const researchGitHubRepositoryBodyRepositoryMax = 200;
+
+
+
+export const ResearchGitHubRepositoryBody = zod.object({
+  "repository": zod.string().min(researchGitHubRepositoryBodyRepositoryMin).max(researchGitHubRepositoryBodyRepositoryMax)
+})
+
+export const ResearchGitHubRepositoryResponse = zod.object({
+  "id": zod.string(),
+  "repository": zod.string(),
+  "displayName": zod.string(),
+  "sourceUrl": zod.string(),
+  "description": zod.string(),
+  "language": zod.string().nullable(),
+  "stars": zod.number(),
+  "forks": zod.number(),
+  "openIssues": zod.number(),
+  "archived": zod.boolean(),
+  "lastPushedAt": zod.string().nullable(),
+  "recentCommitCount": zod.number(),
+  "observedAuthorCount": zod.number(),
+  "commitsTruncated": zod.boolean(),
+  "periodStart": zod.string(),
+  "researchedAt": zod.string(),
+  "apiRequests": zod.number()
+})
+
+
+/**
+ * @summary Get current workspace preferences
+ */
+export const getOrganizationResponseCompanyNameMax = 120;
+
+
+
+export const GetOrganizationResponse = zod.object({
+  "companyName": zod.string().min(1).max(getOrganizationResponseCompanyNameMax),
+  "primaryGeography": zod.enum(['South Asia', 'Southeast Asia', 'East Asia'])
+})
+
+
+/**
+ * @summary Save workspace preferences
+ */
+export const updateOrganizationBodyCompanyNameMax = 120;
+
+
+
+export const UpdateOrganizationBody = zod.object({
+  "companyName": zod.string().min(1).max(updateOrganizationBodyCompanyNameMax),
+  "primaryGeography": zod.enum(['South Asia', 'Southeast Asia', 'East Asia'])
+})
+
+export const updateOrganizationResponseCompanyNameMax = 120;
+
+
+
+export const UpdateOrganizationResponse = zod.object({
+  "companyName": zod.string().min(1).max(updateOrganizationResponseCompanyNameMax),
+  "primaryGeography": zod.enum(['South Asia', 'Southeast Asia', 'East Asia'])
+})
+
+
 /**
  * Returns server health status
  * @summary Health check
@@ -455,5 +854,3 @@ export const CreateBillingPortalResponse = zod.object({
  * @summary Receive a signed Stripe webhook
  */
 export const StripeWebhookResponse = zod.unknown()
-
-

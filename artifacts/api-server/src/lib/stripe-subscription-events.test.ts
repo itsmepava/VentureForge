@@ -49,14 +49,10 @@ test("rejects malformed tenant and Stripe identities", () => {
   );
 });
 
-test("requires an explicit valid HTTPS webhook origin outside Replit", () => {
+test("requires an explicit valid HTTPS webhook origin", () => {
   assert.equal(
     stripeWebhookBaseUrl({ STRIPE_WEBHOOK_BASE_URL: "https://billing.example.com/" }),
     "https://billing.example.com",
-  );
-  assert.equal(
-    stripeWebhookBaseUrl({ REPLIT_DOMAINS: "ventureforge.example,other.example" }),
-    "https://ventureforge.example",
   );
   assert.throws(() => stripeWebhookBaseUrl({}), /is required/);
   assert.throws(

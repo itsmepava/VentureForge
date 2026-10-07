@@ -13,6 +13,8 @@ import {
 import { DEMO_ORGANIZATION_ID, ensureDemoData } from "../lib/demo-data";
 import { buildActivityItems } from "../lib/dashboard-activity";
 
+import { buildDashboardSummary } from "../lib/dashboard-summary";
+
 const router: IRouter = Router();
 
 router.get("/dashboard/summary", async (_req, res, next) => {
@@ -22,33 +24,7 @@ router.get("/dashboard/summary", async (_req, res, next) => {
       .select()
       .from(discoveredCompanies)
       .where(eq(discoveredCompanies.organizationId, DEMO_ORGANIZATION_ID));
-    const regions = new Map<string, number>();
-    for (const company of companies) {
-      const region = company.regionalMetadata.geographyRegion;
-      regions.set(region, (regions.get(region) ?? 0) + 1);
-    }
-    const total = companies.length;
-    const summary = {
-      companyCount: 48,
-      newThisWeek: 12,
-      highSignalCount: companies.filter((company) => company.signalScore >= 85).length + 4,
-      trackedDevelopers: 124,
-      activeRegions: regions.size,
-      weeklyDiscovery: [
-        { label: "Mon", value: 4 },
-        { label: "Tue", value: 6 },
-        { label: "Wed", value: 5 },
-        { label: "Thu", value: 9 },
-        { label: "Fri", value: 8 },
-        { label: "Sat", value: 13 },
-        { label: "Sun", value: 12 },
-      ],
-      regionBreakdown: Array.from(regions.entries()).map(([region, count]) => ({
-        region,
-        count: count + 12,
-        percentage: Math.round(((count + 12) / (total + 48)) * 100),
-      })),
-    };
+    const summary = buildDashboardSummary(companies);
     return res.json(GetDashboardSummaryResponse.parse(summary));
   } catch (error) {
     return next(error);

@@ -26,7 +26,16 @@ app.use(
     },
   }),
 );
-app.use(cors());
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  if (origin) {
+    let allowed = origin === process.env.WEB_ORIGIN;
+    try { const url = new URL(origin); allowed ||= !process.env.WEB_ORIGIN && ['127.0.0.1', 'localhost'].includes(url.hostname) && ['http:', 'https:'].includes(url.protocol); } catch {}
+    if (!allowed) return res.status(403).json({ error: 'This browser origin is not allowed.' });
+  }
+  return next();
+});
+app.use(cors({ origin: true }));
 
 app.use(createStripeWebhookRouter());
 

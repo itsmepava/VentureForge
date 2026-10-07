@@ -36,10 +36,21 @@ import type {
   IntegrationVaultInput,
   IntegrationVerification,
   ListCompaniesParams,
+  OrganizationPreferences,
   PortfolioSource,
   PortfolioSourceInput,
+  RepositoryResearch,
+  RepositoryResearchInput,
   SavedSearch,
-  SavedSearchInput
+  SavedSearchInput,
+  SourcingDesk,
+  SourcingMandate,
+  SourcingMandateInput,
+  SourcingProspect,
+  SourcingProspectInput,
+  SourcingProvider,
+  SourcingProviderInput,
+  SourcingRun
 } from './api.schemas';
 
 import { customFetch } from '../custom-fetch';
@@ -68,6 +79,836 @@ const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKe
   }
   return result;
 };
+
+export const getGetSourcingDeskUrl = () => {
+
+
+
+
+  return `/api/sourcing`
+}
+
+export const getSourcingDesk = async ( options?: Parameters<typeof customFetch>[1]): Promise<SourcingDesk> => {
+
+  return customFetch<SourcingDesk>(getGetSourcingDeskUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetSourcingDeskQueryKey = () => {
+    return [
+    `/api/sourcing`
+    ] as const;
+    }
+
+
+export const getGetSourcingDeskQueryOptions = <TData = Awaited<ReturnType<typeof getSourcingDesk>>, TError = ErrorType<void>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getSourcingDesk>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetSourcingDeskQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getSourcingDesk>>> = ({ signal }) => getSourcingDesk({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getSourcingDesk>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetSourcingDeskQueryResult = NonNullable<Awaited<ReturnType<typeof getSourcingDesk>>>
+export type GetSourcingDeskQueryError = ErrorType<void>
+
+
+
+export function useGetSourcingDesk<TData = Awaited<ReturnType<typeof getSourcingDesk>>, TError = ErrorType<void>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getSourcingDesk>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetSourcingDeskQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getCreateSourcingMandateUrl = () => {
+
+
+
+
+  return `/api/sourcing/mandates`
+}
+
+export const createSourcingMandate = async (sourcingMandateInput: SourcingMandateInput, options?: Parameters<typeof customFetch>[1]): Promise<SourcingMandate> => {
+
+  return customFetch<SourcingMandate>(getCreateSourcingMandateUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(sourcingMandateInput)
+  }
+);}
+
+
+
+
+
+export const getCreateSourcingMandateMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createSourcingMandate>>, TError,{data: BodyType<SourcingMandateInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createSourcingMandate>>, TError,{data: BodyType<SourcingMandateInput>}, TContext> => {
+
+const mutationKey = ['createSourcingMandate'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createSourcingMandate>>, {data: BodyType<SourcingMandateInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createSourcingMandate(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateSourcingMandateMutationResult = NonNullable<Awaited<ReturnType<typeof createSourcingMandate>>>
+    export type CreateSourcingMandateMutationBody = BodyType<SourcingMandateInput>
+    export type CreateSourcingMandateMutationError = ErrorType<void>
+
+    export const useCreateSourcingMandate = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createSourcingMandate>>, TError,{data: BodyType<SourcingMandateInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createSourcingMandate>>,
+        TError,
+        {data: BodyType<SourcingMandateInput>},
+        TContext
+      > => {
+      return useMutation(getCreateSourcingMandateMutationOptions(options));
+    }
+
+export const getUpdateSourcingMandateUrl = (id: string,) => {
+
+
+
+
+  return `/api/sourcing/mandates/${id}`
+}
+
+export const updateSourcingMandate = async (id: string,
+    sourcingMandateInput: SourcingMandateInput, options?: Parameters<typeof customFetch>[1]): Promise<SourcingMandate> => {
+
+  return customFetch<SourcingMandate>(getUpdateSourcingMandateUrl(id),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(sourcingMandateInput)
+  }
+);}
+
+
+
+
+
+export const getUpdateSourcingMandateMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateSourcingMandate>>, TError,{id: string;data: BodyType<SourcingMandateInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateSourcingMandate>>, TError,{id: string;data: BodyType<SourcingMandateInput>}, TContext> => {
+
+const mutationKey = ['updateSourcingMandate'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateSourcingMandate>>, {id: string;data: BodyType<SourcingMandateInput>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  updateSourcingMandate(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateSourcingMandateMutationResult = NonNullable<Awaited<ReturnType<typeof updateSourcingMandate>>>
+    export type UpdateSourcingMandateMutationBody = BodyType<SourcingMandateInput>
+    export type UpdateSourcingMandateMutationError = ErrorType<void>
+
+    export const useUpdateSourcingMandate = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateSourcingMandate>>, TError,{id: string;data: BodyType<SourcingMandateInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateSourcingMandate>>,
+        TError,
+        {id: string;data: BodyType<SourcingMandateInput>},
+        TContext
+      > => {
+      return useMutation(getUpdateSourcingMandateMutationOptions(options));
+    }
+
+export const getStartSourcingScanUrl = (id: string,) => {
+
+
+
+
+  return `/api/sourcing/mandates/${id}/scan`
+}
+
+export const startSourcingScan = async (id: string, options?: Parameters<typeof customFetch>[1]): Promise<SourcingRun> => {
+
+  return customFetch<SourcingRun>(getStartSourcingScanUrl(id),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+
+export const getStartSourcingScanMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof startSourcingScan>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof startSourcingScan>>, TError,{id: string}, TContext> => {
+
+const mutationKey = ['startSourcingScan'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof startSourcingScan>>, {id: string}> = (props) => {
+          const {id} = props ?? {};
+
+          return  startSourcingScan(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type StartSourcingScanMutationResult = NonNullable<Awaited<ReturnType<typeof startSourcingScan>>>
+
+    export type StartSourcingScanMutationError = ErrorType<void>
+
+    export const useStartSourcingScan = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof startSourcingScan>>, TError,{id: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof startSourcingScan>>,
+        TError,
+        {id: string},
+        TContext
+      > => {
+      return useMutation(getStartSourcingScanMutationOptions(options));
+    }
+
+export const getSaveSourcingProviderUrl = () => {
+
+
+
+
+  return `/api/sourcing/provider`
+}
+
+export const saveSourcingProvider = async (sourcingProviderInput: SourcingProviderInput, options?: Parameters<typeof customFetch>[1]): Promise<SourcingProvider> => {
+
+  return customFetch<SourcingProvider>(getSaveSourcingProviderUrl(),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(sourcingProviderInput)
+  }
+);}
+
+
+
+
+
+export const getSaveSourcingProviderMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof saveSourcingProvider>>, TError,{data: BodyType<SourcingProviderInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof saveSourcingProvider>>, TError,{data: BodyType<SourcingProviderInput>}, TContext> => {
+
+const mutationKey = ['saveSourcingProvider'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof saveSourcingProvider>>, {data: BodyType<SourcingProviderInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  saveSourcingProvider(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SaveSourcingProviderMutationResult = NonNullable<Awaited<ReturnType<typeof saveSourcingProvider>>>
+    export type SaveSourcingProviderMutationBody = BodyType<SourcingProviderInput>
+    export type SaveSourcingProviderMutationError = ErrorType<void>
+
+    export const useSaveSourcingProvider = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof saveSourcingProvider>>, TError,{data: BodyType<SourcingProviderInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof saveSourcingProvider>>,
+        TError,
+        {data: BodyType<SourcingProviderInput>},
+        TContext
+      > => {
+      return useMutation(getSaveSourcingProviderMutationOptions(options));
+    }
+
+export const getDeleteSourcingProviderUrl = () => {
+
+
+
+
+  return `/api/sourcing/provider`
+}
+
+export const deleteSourcingProvider = async ( options?: Parameters<typeof customFetch>[1]): Promise<void> => {
+
+  return customFetch<void>(getDeleteSourcingProviderUrl(),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getDeleteSourcingProviderMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteSourcingProvider>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteSourcingProvider>>, TError,void, TContext> => {
+
+const mutationKey = ['deleteSourcingProvider'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteSourcingProvider>>, void> = () => {
+
+
+          return  deleteSourcingProvider(requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteSourcingProviderMutationResult = NonNullable<Awaited<ReturnType<typeof deleteSourcingProvider>>>
+
+    export type DeleteSourcingProviderMutationError = ErrorType<void>
+
+    export const useDeleteSourcingProvider = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteSourcingProvider>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof deleteSourcingProvider>>,
+        TError,
+        void,
+        TContext
+      > => {
+      return useMutation(getDeleteSourcingProviderMutationOptions(options));
+    }
+
+export const getUpdateSourcingProspectUrl = (id: string,) => {
+
+
+
+
+  return `/api/sourcing/prospects/${id}`
+}
+
+export const updateSourcingProspect = async (id: string,
+    sourcingProspectInput: SourcingProspectInput, options?: Parameters<typeof customFetch>[1]): Promise<SourcingProspect> => {
+
+  return customFetch<SourcingProspect>(getUpdateSourcingProspectUrl(id),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(sourcingProspectInput)
+  }
+);}
+
+
+
+
+
+export const getUpdateSourcingProspectMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateSourcingProspect>>, TError,{id: string;data: BodyType<SourcingProspectInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateSourcingProspect>>, TError,{id: string;data: BodyType<SourcingProspectInput>}, TContext> => {
+
+const mutationKey = ['updateSourcingProspect'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateSourcingProspect>>, {id: string;data: BodyType<SourcingProspectInput>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  updateSourcingProspect(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateSourcingProspectMutationResult = NonNullable<Awaited<ReturnType<typeof updateSourcingProspect>>>
+    export type UpdateSourcingProspectMutationBody = BodyType<SourcingProspectInput>
+    export type UpdateSourcingProspectMutationError = ErrorType<void>
+
+    export const useUpdateSourcingProspect = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateSourcingProspect>>, TError,{id: string;data: BodyType<SourcingProspectInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateSourcingProspect>>,
+        TError,
+        {id: string;data: BodyType<SourcingProspectInput>},
+        TContext
+      > => {
+      return useMutation(getUpdateSourcingProspectMutationOptions(options));
+    }
+
+export const getExportSourcingProspectsUrl = () => {
+
+
+
+
+  return `/api/sourcing/export.csv`
+}
+
+export const exportSourcingProspects = async ( options?: Parameters<typeof customFetch>[1]): Promise<string> => {
+
+  return customFetch<string>(getExportSourcingProspectsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getExportSourcingProspectsQueryKey = () => {
+    return [
+    `/api/sourcing/export.csv`
+    ] as const;
+    }
+
+
+export const getExportSourcingProspectsQueryOptions = <TData = Awaited<ReturnType<typeof exportSourcingProspects>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof exportSourcingProspects>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getExportSourcingProspectsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof exportSourcingProspects>>> = ({ signal }) => exportSourcingProspects({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof exportSourcingProspects>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ExportSourcingProspectsQueryResult = NonNullable<Awaited<ReturnType<typeof exportSourcingProspects>>>
+export type ExportSourcingProspectsQueryError = ErrorType<unknown>
+
+
+
+export function useExportSourcingProspects<TData = Awaited<ReturnType<typeof exportSourcingProspects>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof exportSourcingProspects>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getExportSourcingProspectsQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getListRepositoryResearchUrl = () => {
+
+
+
+
+  return `/api/repository-research`
+}
+
+/**
+ * @summary List saved GitHub research
+ */
+export const listRepositoryResearch = async ( options?: Parameters<typeof customFetch>[1]): Promise<RepositoryResearch[]> => {
+
+  return customFetch<RepositoryResearch[]>(getListRepositoryResearchUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListRepositoryResearchQueryKey = () => {
+    return [
+    `/api/repository-research`
+    ] as const;
+    }
+
+
+export const getListRepositoryResearchQueryOptions = <TData = Awaited<ReturnType<typeof listRepositoryResearch>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listRepositoryResearch>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListRepositoryResearchQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listRepositoryResearch>>> = ({ signal }) => listRepositoryResearch({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listRepositoryResearch>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListRepositoryResearchQueryResult = NonNullable<Awaited<ReturnType<typeof listRepositoryResearch>>>
+export type ListRepositoryResearchQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary List saved GitHub research
+ */
+
+export function useListRepositoryResearch<TData = Awaited<ReturnType<typeof listRepositoryResearch>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listRepositoryResearch>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListRepositoryResearchQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getResearchGitHubRepositoryUrl = () => {
+
+
+
+
+  return `/api/repository-research`
+}
+
+/**
+ * @summary Fetch live GitHub evidence and save it
+ */
+export const researchGitHubRepository = async (repositoryResearchInput: RepositoryResearchInput, options?: Parameters<typeof customFetch>[1]): Promise<RepositoryResearch> => {
+
+  return customFetch<RepositoryResearch>(getResearchGitHubRepositoryUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(repositoryResearchInput)
+  }
+);}
+
+
+
+
+
+export const getResearchGitHubRepositoryMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof researchGitHubRepository>>, TError,{data: BodyType<RepositoryResearchInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof researchGitHubRepository>>, TError,{data: BodyType<RepositoryResearchInput>}, TContext> => {
+
+const mutationKey = ['researchGitHubRepository'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof researchGitHubRepository>>, {data: BodyType<RepositoryResearchInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  researchGitHubRepository(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ResearchGitHubRepositoryMutationResult = NonNullable<Awaited<ReturnType<typeof researchGitHubRepository>>>
+    export type ResearchGitHubRepositoryMutationBody = BodyType<RepositoryResearchInput>
+    export type ResearchGitHubRepositoryMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Fetch live GitHub evidence and save it
+ */
+export const useResearchGitHubRepository = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof researchGitHubRepository>>, TError,{data: BodyType<RepositoryResearchInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof researchGitHubRepository>>,
+        TError,
+        {data: BodyType<RepositoryResearchInput>},
+        TContext
+      > => {
+      return useMutation(getResearchGitHubRepositoryMutationOptions(options));
+    }
+
+export const getGetOrganizationUrl = () => {
+
+
+
+
+  return `/api/organization`
+}
+
+/**
+ * @summary Get current workspace preferences
+ */
+export const getOrganization = async ( options?: Parameters<typeof customFetch>[1]): Promise<OrganizationPreferences> => {
+
+  return customFetch<OrganizationPreferences>(getGetOrganizationUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetOrganizationQueryKey = () => {
+    return [
+    `/api/organization`
+    ] as const;
+    }
+
+
+export const getGetOrganizationQueryOptions = <TData = Awaited<ReturnType<typeof getOrganization>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getOrganization>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetOrganizationQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getOrganization>>> = ({ signal }) => getOrganization({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getOrganization>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetOrganizationQueryResult = NonNullable<Awaited<ReturnType<typeof getOrganization>>>
+export type GetOrganizationQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Get current workspace preferences
+ */
+
+export function useGetOrganization<TData = Awaited<ReturnType<typeof getOrganization>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getOrganization>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetOrganizationQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export const getUpdateOrganizationUrl = () => {
+
+
+
+
+  return `/api/organization`
+}
+
+/**
+ * @summary Save workspace preferences
+ */
+export const updateOrganization = async (organizationPreferences: OrganizationPreferences, options?: Parameters<typeof customFetch>[1]): Promise<OrganizationPreferences> => {
+
+  return customFetch<OrganizationPreferences>(getUpdateOrganizationUrl(),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(organizationPreferences)
+  }
+);}
+
+
+
+
+
+export const getUpdateOrganizationMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateOrganization>>, TError,{data: BodyType<OrganizationPreferences>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateOrganization>>, TError,{data: BodyType<OrganizationPreferences>}, TContext> => {
+
+const mutationKey = ['updateOrganization'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateOrganization>>, {data: BodyType<OrganizationPreferences>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  updateOrganization(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateOrganizationMutationResult = NonNullable<Awaited<ReturnType<typeof updateOrganization>>>
+    export type UpdateOrganizationMutationBody = BodyType<OrganizationPreferences>
+    export type UpdateOrganizationMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Save workspace preferences
+ */
+export const useUpdateOrganization = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateOrganization>>, TError,{data: BodyType<OrganizationPreferences>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateOrganization>>,
+        TError,
+        {data: BodyType<OrganizationPreferences>},
+        TContext
+      > => {
+      return useMutation(getUpdateOrganizationMutationOptions(options));
+    }
 
 export const getHealthCheckUrl = () => {
 
@@ -1897,4 +2738,3 @@ export const useStripeWebhook = <TError = ErrorType<void>,
       > => {
       return useMutation(getStripeWebhookMutationOptions(options));
     }
-

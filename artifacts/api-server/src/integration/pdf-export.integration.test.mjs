@@ -83,7 +83,7 @@ test("PDF download preserves filters, Unicode text, headers, empty results, and 
       DATABASE_URL: scopedDatabaseUrl.toString(),
       PORT: String(port),
       GITHUB_WORKER_ENABLED: "false",
-      STRIPE_SYNC_ENABLED: "false",
+      DEMO_SEED_DATA: "true",
     },
     stdio: ["ignore", "pipe", "pipe"],
   });

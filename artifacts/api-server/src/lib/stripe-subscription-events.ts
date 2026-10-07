@@ -121,11 +121,10 @@ export function resolveStripeSubscriptionOrganization(
 
 export function stripeWebhookBaseUrl(env: NodeJS.ProcessEnv) {
   const configured = env.STRIPE_WEBHOOK_BASE_URL?.trim();
-  const replitDomain = env.REPLIT_DOMAINS?.split(",")[0]?.trim();
-  const rawUrl = configured || (replitDomain ? `https://${replitDomain}` : "");
+  const rawUrl = configured;
   if (!rawUrl) {
     throw new Error(
-      "STRIPE_WEBHOOK_BASE_URL or REPLIT_DOMAINS is required when STRIPE_SYNC_ENABLED=true",
+      "STRIPE_WEBHOOK_BASE_URL is required to configure a webhook origin",
     );
   }
   const url = new URL(rawUrl);
